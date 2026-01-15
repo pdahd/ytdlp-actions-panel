@@ -4,60 +4,136 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>yt-dlp Actions Panel</title>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      --bg: #0b1020;
-      --fg: #e8ecff;
-      --card: rgba(255,255,255,.06);
-      --border: rgba(255,255,255,.12);
-      --border2: rgba(255,255,255,.18);
-      --muted: rgba(232,236,255,.80);
-      --input-bg: rgba(0,0,0,.25);
-      --pre-bg: rgba(0,0,0,.35);
-      --btn: #4b6bff;
-      --link: #9db2ff;
-      --gap: 12px;
-      --radius: 16px;
+      /* 更亮的暗色背景 + 冷色金属风 */
+      --bg0: #0a1224;
+      --bg1: #101b33;
+      --bg2: #0a0f1d;
+
+      --text: #eef2ff;
+      --muted: rgba(238,242,255,.80);
+
+      /* 金属/玻璃面板 */
+      --card: rgba(255,255,255,.075);
+      --card2: rgba(255,255,255,.045);
+      --border: rgba(255,255,255,.16);
+      --border2: rgba(255,255,255,.22);
+
+      --input-bg: rgba(10,14,25,.55);
+      --pre-bg: rgba(8,10,18,.60);
+
+      --link: #a9baff;
+      --btn: linear-gradient(180deg, #5f7cff 0%, #3f60ff 100%);
+      --btn-border: rgba(255,255,255,.22);
+
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --shadow2: 0 10px 25px rgba(0,0,0,.35);
+
+      --radius: 18px;
       --radius2: 12px;
+      --gap: 12px;
     }
 
-    body {
+    body{
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
-      background: var(--bg);
-      color: var(--fg);
+      color: var(--text);
+
+      /* 多层渐变：更亮、有层次 */
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-attachment: fixed;
     }
 
-    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+    .wrap{ max-width: 980px; margin: 22px auto; padding: 0 16px; }
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
+    a{ color: var(--link); }
+
+    .muted{ opacity: .9; font-size: 13px; color: var(--muted); }
+
+    /* 金属卡片：渐变边框 + 高光 + 内阴影 */
+    .card{
+      position: relative;
       border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)) padding-box,
+        linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.08), rgba(255,255,255,.22)) border-box;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
       padding: 18px;
+      overflow: hidden;
     }
 
-    .muted { opacity: .85; font-size: 13px; color: var(--muted); }
-    a { color: var(--link); }
-    hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+    /* 顶部镀铬高光条 */
+    .card::before{
+      content:"";
+      position:absolute;
+      left: -10%;
+      right: -10%;
+      top: -28px;
+      height: 74px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,.16) 20%,
+        rgba(255,255,255,.06) 45%,
+        rgba(255,255,255,.14) 70%,
+        transparent 100%);
+      transform: rotate(-2deg);
+      pointer-events:none;
+      filter: blur(.2px);
+    }
 
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    /* 玻璃模糊（可选，兼容则生效，不兼容则忽略） */
+    .card{
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
+    }
+
+    hr{
+      border: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      margin: 14px 0;
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+    }
     .grid > * { min-width: 0; }
-    .full { grid-column: 1 / -1; min-width: 0; }
+    .full{ grid-column: 1 / -1; min-width: 0; }
 
-    label { display:block; font-size: 13px; opacity:.92; margin-bottom:6px; }
+    label{ display:block; font-size: 13px; opacity: .95; margin-bottom: 6px; }
 
-    input, select {
+    input, select{
       width: 100%;
       max-width: 100%;
       padding: 10px 12px;
       border-radius: var(--radius2);
       border: 1px solid var(--border2);
       background: var(--input-bg);
-      color: var(--fg);
+      color: var(--text);
       outline: none;
+
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        inset 0 -10px 25px rgba(0,0,0,.22);
+    }
+
+    input:focus, select:focus{
+      border-color: rgba(160,190,255,.55);
+      box-shadow:
+        0 0 0 3px rgba(95,124,255,.18),
+        inset 0 1px 0 rgba(255,255,255,.10),
+        inset 0 -10px 25px rgba(0,0,0,.22);
     }
 
     .time-grid{
@@ -69,35 +145,37 @@
     }
     .time-grid > * { min-width: 0; }
 
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; min-width:0; }
+    .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
 
-    button {
+    button{
       padding: 10px 14px;
       border-radius: var(--radius2);
-      border: 1px solid var(--border2);
+      border: 1px solid var(--btn-border);
       background: var(--btn);
-      color: #fff;
-      cursor: pointer;
-      max-width: 100%;
+      color:#fff;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
     }
-    button:disabled { opacity:.6; cursor:not-allowed; }
+    button:disabled{ opacity: .6; cursor:not-allowed; }
 
-    pre {
+    pre{
       white-space: pre-wrap;
       word-break: break-word;
       background: var(--pre-bg);
       padding: 12px;
       border-radius: var(--radius2);
-      border: 1px solid var(--border);
-      overflow: auto;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      overflow:auto;
     }
 
     .table-wrap{
       width: 100%;
       overflow-x: auto;
       border-radius: var(--radius2);
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
 
     table{ width:100%; border-collapse: collapse; min-width: 720px; }
@@ -107,33 +185,35 @@
       display:inline-block;
       padding:2px 8px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.15);
+      border:1px solid rgba(255,255,255,.18);
       font-size:12px;
-      opacity:.9;
+      opacity:.95;
       margin-left:6px;
+      background: rgba(255,255,255,.05);
     }
 
     .thumb{
       width: 96px;
       height: 54px;
       object-fit: cover;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.25);
       display:block;
+      box-shadow: 0 8px 18px rgba(0,0,0,.35);
     }
 
     .badge-img{
-      height: 26px;
+      height: 28px;
       max-width: 100%;
       vertical-align: middle;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
     }
 
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
       .grid{ grid-template-columns: 1fr; }
     }
-
     @media (max-width: 520px){
       .time-grid{ grid-template-columns: 1fr; }
       .time-grid .time-pair{
@@ -141,9 +221,8 @@
         grid-template-columns: 1fr 1fr;
         gap: var(--gap);
       }
-      .time-grid .time-pair > * { min-width: 0; }
+      .time-grid .time-pair > *{ min-width:0; }
     }
-
     @media (max-width: 380px){
       .time-grid .time-pair{ grid-template-columns: 1fr; }
     }
@@ -242,21 +321,15 @@
   function parseYouTubeId(input){
     try{
       const u = new URL(input);
-      // watch?v=
       const v = u.searchParams.get("v");
       if (v) return v;
-
-      // youtu.be/<id>
       if (u.hostname.includes("youtu.be")) {
         const id = u.pathname.split("/").filter(Boolean)[0];
         if (id) return id;
       }
-
-      // shorts/<id>
       const parts = u.pathname.split("/").filter(Boolean);
       const shortsIdx = parts.indexOf("shorts");
       if (shortsIdx >= 0 && parts[shortsIdx+1]) return parts[shortsIdx+1];
-
       return null;
     } catch {
       return null;
@@ -268,12 +341,8 @@
   }
 
   function shieldDownloadBadge(resolution){
-    // static/v1 避免 label-message-color 的连字符分隔坑
     const label = "YouTube";
-    const message = resolution
-      ? `下载zip（经Worker） 🎞️ ${resolution}`
-      : `下载zip（经Worker）`;
-
+    const message = resolution ? `下载zip（经Worker） 🎞️ ${resolution}` : `下载zip（经Worker）`;
     const url = new URL("https://img.shields.io/static/v1");
     url.searchParams.set("label", label);
     url.searchParams.set("message", message);
@@ -347,7 +416,6 @@
     const metaName = `meta-${requestId}`;
     const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
     if(!exists) return null;
-
     const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
     return JSON.parse(txt);
   }
@@ -378,7 +446,6 @@
       if(name === queryName) badges.push(`<span class="pill">query</span>`);
       if(name === downloadName) badges.push(`<span class="pill">download</span>`);
 
-      // “下载zip（经Worker）”按钮：对 downloaded-videos 用 YouTube 徽章（含真实分辨率）
       let workerDownloadHtml = `<a href="${proxyZip}">下载zip（经Worker）</a>`;
       if(name === downloadName){
         const res = meta?.selected?.resolution || null;
@@ -469,7 +536,6 @@
       await sleep(2000);
     }
 
-    // completed 后：加载 artifacts + 尝试读取 meta.json
     let arts = null;
     let meta = null;
     try {
@@ -483,7 +549,6 @@
       $("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
     }
 
-    // 查询：仍然展示 formats.txt
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
       $("status").textContent = "查询已完成，正在获取 formats.txt ...";
