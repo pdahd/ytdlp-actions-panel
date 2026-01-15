@@ -39,6 +39,7 @@ on:
 jobs:
   download_video:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -50,13 +51,14 @@ jobs:
       - name: Install yt-dlp (with EJS scripts)
         run: pip install -U "yt-dlp[default]"
 
+      # ====== 查询模式：formats.txt ======
       - name: Query available formats (yt-dlp -F)
         if: ${{ github.event.inputs.action_type == '查询' }}
         env:
           COOKIES_CONTENT: ${{ secrets.COOKIES }}
         run: |
           mkdir -p out
-          yt-dlp --cookies <(echo "$COOKIES_CONTENT") -F \
+          yt-dlp --cookies <(printf '%s' "$COOKIES_CONTENT") -F \
           "${{ github.event.inputs.video_link }}" | tee out/formats.txt
 
       - name: Upload query result
@@ -66,6 +68,113 @@ jobs:
           name: query-result-${{ github.event.inputs.request_id }}
           path: out/formats.txt
 
+      # ====== 下载模式：生成 meta.json（真实分辨率/帧率/选中format id） ======
+      - name: Generate meta.json (selected format info)
+        if: ${{ github.event.inputs.action_type == '下载' }}
+        env:
+          COOKIES_CONTENT: ${{ secrets.COOKIES }}
+          REQUEST_ID: ${{ github.event.inputs.request_id }}
+          REQUESTED_FORMAT: ${{ github.event.inputs.video_format }}
+          VIDEO_LINK: ${{ github.event.inputs.video_link }}
+        run: |
+          mkdir -p out
+
+          # 用 -J + -f 让 yt-dlp 在“下载前”完成格式选择，输出 JSON
+          yt-dlp --cookies <(printf '%s' "$COOKIES_CONTENT") -J \
+          -f "$REQUESTED_FORMAT" \
+          "$VIDEO_LINK" > out/info.json
+
+          python3 - <<'PY'
+          import json, os, math
+
+          req_id = os.environ.get("REQUEST_ID", "")
+          req_fmt = os.environ.get("REQUESTED_FORMAT", "")
+          video_link = os.environ.get("VIDEO_LINK", "")
+
+          with open("out/info.json", "r", encoding="utf-8") as f:
+            info = json.load(f)
+
+          def pick_requested(info):
+            req = info.get("requested_formats") or []
+            video = None
+            audio = None
+            for f in req:
+              if not video and f and f.get("vcodec") and f.get("vcodec") != "none":
+                video = f
+              if not audio and f and f.get("acodec") and f.get("acodec") != "none":
+                audio = f
+            return video, audio
+
+          video, audio = pick_requested(info)
+
+          vid = info.get("id")
+          title = info.get("title")
+          webpage_url = info.get("webpage_url") or video_link
+
+          # 你选择了 2A：封面直接走 i.ytimg.com
+          thumb = None
+          if vid:
+            thumb = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+
+          height = None
+          fps = None
+          if video:
+            height = video.get("height")
+            fps = video.get("fps")
+          if height is None:
+            height = info.get("height")
+          if fps is None:
+            fps = info.get("fps")
+
+          fps_int = None
+          if fps is not None:
+            try:
+              fps_int = int(round(float(fps)))
+            except:
+              fps_int = None
+
+          resolution = None
+          if height:
+            resolution = f"{height}p"
+            if fps_int:
+              # 常见展示形式：2160p60
+              resolution = f"{resolution}{fps_int}"
+
+          meta = {
+            "request_id": req_id,
+            "video_id": vid,
+            "title": title,
+            "webpage_url": webpage_url,
+            "thumbnail": thumb,
+            "requested_format": req_fmt,
+            "selected": {
+              "resolution": resolution,
+              "height": height,
+              "fps": fps_int,
+              "video_format_id": (video.get("format_id") if video else None),
+              "audio_format_id": (audio.get("format_id") if audio else None),
+              "video_ext": (video.get("ext") if video else None),
+              "audio_ext": (audio.get("ext") if audio else None),
+            },
+            "artifacts": {
+              "download_zip_name": f"downloaded-videos-{req_id}"
+            }
+          }
+
+          with open("out/meta.json", "w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+
+          print("meta.json written:", "out/meta.json")
+          PY
+
+      - name: Upload meta.json
+        if: ${{ github.event.inputs.action_type == '下载' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: meta-${{ github.event.inputs.request_id }}
+          path: out/meta.json
+
+      # ====== 下载模式：安装 FFmpeg + 下载 + 上传 ======
       - name: Install FFmpeg (BtbN Daily Build)
         if: ${{ github.event.inputs.action_type == '下载' }}
         run: |
@@ -81,7 +190,7 @@ jobs:
           COOKIES_CONTENT: ${{ secrets.COOKIES }}
         run: |
           mkdir -p downloads
-          yt-dlp --cookies <(echo "$COOKIES_CONTENT") -f "${{ github.event.inputs.video_format }}" \
+          yt-dlp --cookies <(printf '%s' "$COOKIES_CONTENT") -f "${{ github.event.inputs.video_format }}" \
           $([[ "${{ github.event.inputs.enable_sections }}" == "是" ]] && echo --download-sections "*${{ github.event.inputs.start_time }}-${{ github.event.inputs.end_time }}") \
           --concurrent-fragments 10 \
           -o "downloads/%(title)s.%(ext)s" \
