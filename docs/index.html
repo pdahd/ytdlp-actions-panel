@@ -2,28 +2,220 @@
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>yt-dlp Actions Panel</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial; margin: 0; background:#0b1020; color:#e8ecff; }
-    .wrap { max-width: 900px; margin: 28px auto; padding: 0 16px; }
-    .card { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 18px; }
-    code { background: rgba(0,0,0,.35); padding: 2px 6px; border-radius: 8px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial; background:#0b1020; color:#e8ecff; margin:0; }
+    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+    .card { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 18px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display:block; font-size: 13px; opacity:.9; margin-bottom:6px; }
+    input, select { width:100%; padding:10px 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.25); color:#e8ecff; }
+    button { padding: 10px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.18); background:#4b6bff; color:white; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    pre { white-space: pre-wrap; background: rgba(0,0,0,.35); padding: 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.12); }
+    table { width:100%; border-collapse: collapse; }
+    td, th { border-bottom: 1px solid rgba(255,255,255,.10); padding: 8px; font-size: 13px; vertical-align: top; }
     a { color:#9db2ff; }
+    .row { display:flex; gap: 10px; align-items:center; flex-wrap:wrap; }
+    .muted{ opacity:.8; font-size:13px; }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="card">
-      <h2 style="margin:0 0 8px;">yt-dlp Actions Panel</h2>
-      <p style="margin:0 0 10px;opacity:.9;">
-        Pages 已启用。下一步将接入 Cloudflare Worker，用网页表单触发 GitHub Actions。
-      </p>
-      <p style="margin:0;opacity:.9;">
-        仓库：<code>pdahd/ytdlp-actions-panel</code><br>
-        Workflow：<code>.github/workflows/ytdlp.yml</code>
-      </p>
+      <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
+      <div class="muted">网页表单 → Cloudflare Worker → workflow_dispatch → 轮询 run/jobs → “查询”完成后展示 formats.txt</div>
+
+      <hr style="border:0;border-top:1px solid rgba(255,255,255,.12);margin:14px 0;">
+
+      <form id="f">
+        <div class="grid">
+          <div>
+            <label>操作类型</label>
+            <select name="action_type">
+              <option>查询</option>
+              <option>下载</option>
+            </select>
+          </div>
+          <div>
+            <label>视频格式代码（下载用）</label>
+            <input name="video_format" placeholder="例如 251 / 137+140 等">
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>YouTube 视频链接</label>
+            <input name="video_link" required placeholder="https://www.youtube.com/watch?v=...">
+          </div>
+          <div>
+            <label>启用指定时间段</label>
+            <select name="enable_sections">
+              <option>否</option>
+              <option>是</option>
+            </select>
+          </div>
+          <div class="row">
+            <div style="flex:1">
+              <label>开始时间</label>
+              <input name="start_time" placeholder="mm:ss 或 hh:mm:ss">
+            </div>
+            <div style="flex:1">
+              <label>结束时间</label>
+              <input name="end_time" placeholder="mm:ss 或 hh:mm:ss">
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button id="btn" type="submit">提交并运行</button>
+          <span id="status" class="muted"></span>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="row">
+        <div><b>运行信息</b></div>
+        <div class="muted" id="runMeta"></div>
+      </div>
+      <div id="steps"></div>
+
+      <h3 style="margin-top:16px;">查询结果（formats.txt）</h3>
+      <pre id="result">(等待查询完成...)</pre>
     </div>
   </div>
+
+<script type="module">
+  import { unzipSync, strFromU8 } from "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js";
+
+  const WORKER_BASE = "https://ytdlp-actions-panel-api.yswwsy.workers.dev";
+
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise(r=>setTimeout(r, ms));
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+  function renderSteps(jobsJson){
+    const jobs = jobsJson.jobs || [];
+    let html = "<table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>";
+    for(const job of jobs){
+      for(const s of (job.steps || [])){
+        html += `<tr>
+          <td>${job.name || ""}</td>
+          <td>${s.name || ""}</td>
+          <td>${s.status || ""}</td>
+          <td>${s.conclusion || ""}</td>
+        </tr>`;
+      }
+    }
+    html += "</tbody></table>";
+    $("steps").innerHTML = html;
+  }
+
+  async function fetchJSON(path){
+    const r = await fetch(WORKER_BASE + path, { credentials: "include" });
+    const t = await r.text();
+    if(!r.ok) throw new Error(t);
+    return JSON.parse(t);
+  }
+
+  async function postJSON(path, body){
+    const r = await fetch(WORKER_BASE + path, {
+      method:"POST",
+      credentials: "include",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const t = await r.text();
+    if(!r.ok) throw new Error(t);
+    return JSON.parse(t);
+  }
+
+  $("f").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("btn").disabled = true;
+    $("result").textContent = "(等待查询完成...)";
+    $("steps").innerHTML = "";
+    $("runMeta").textContent = "";
+    $("status").textContent = "正在触发工作流...";
+
+    const fd = new FormData(e.target);
+    const request_id = uuid();
+
+    const inputs = {
+      request_id,
+      action_type: fd.get("action_type"),
+      video_link: fd.get("video_link"),
+      video_format: fd.get("video_format") || "",
+      enable_sections: fd.get("enable_sections") || "否",
+      start_time: fd.get("start_time") || "",
+      end_time: fd.get("end_time") || "",
+    };
+
+    if(inputs.action_type === "下载" && !inputs.video_format){
+      alert("下载模式需要填写 视频格式代码");
+      $("btn").disabled = false;
+      return;
+    }
+
+    // 1) dispatch
+    await postJSON("/dispatch", { ref: "main", inputs });
+    $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
+
+    // 2) resolve run_id
+    let run = null;
+    for(let i=0;i<45;i++){
+      const res = await fetchJSON(`/resolve?request_id=${encodeURIComponent(request_id)}`);
+      if(res.found){ run = res.run; break; }
+      await sleep(1000);
+    }
+    if(!run){
+      $("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
+      $("btn").disabled = false;
+      return;
+    }
+
+    const runId = run.id;
+    $("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
+    $("status").textContent = "运行中...";
+
+    // 3) poll status + jobs
+    let runInfo = null;
+    while(true){
+      runInfo = await fetchJSON(`/run?run_id=${runId}`);
+      const jobs = await fetchJSON(`/jobs?run_id=${runId}`);
+      renderSteps(jobs);
+
+      const st = `${runInfo.status}${runInfo.conclusion ? " / " + runInfo.conclusion : ""}`;
+      $("status").textContent = `状态：${st}`;
+
+      if(runInfo.status === "completed") break;
+      await sleep(2000);
+    }
+
+    // 4) 查询：拉取 artifact zip，解压 formats.txt
+    if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
+      const artName = `query-result-${request_id}`;
+      $("status").textContent = "查询已完成，正在获取 formats.txt ...";
+
+      const zipResp = await fetch(WORKER_BASE + `/artifact-zip?run_id=${runId}&name=${encodeURIComponent(artName)}`, { credentials:"include" });
+      if(!zipResp.ok){
+        $("result").textContent = "下载查询结果 artifact 失败：" + await zipResp.text();
+      }else{
+        const buf = await zipResp.arrayBuffer();
+        const files = unzipSync(new Uint8Array(buf));
+        const key = Object.keys(files).find(k => k.endsWith("formats.txt"));
+        if(!key){
+          $("result").textContent = "zip 中未找到 formats.txt";
+        }else{
+          $("result").textContent = strFromU8(files[key]);
+        }
+      }
+    } else {
+      $("result").textContent = "（非查询模式，或运行失败。请查看上方 steps 状态 / GitHub 运行页面日志。）";
+    }
+
+    $("btn").disabled = false;
+  });
+</script>
 </body>
 </html>
