@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>yt-dlp Actions Panel</title>
   <style>
-    /* ====== 修复核心：避免 width + padding 溢出 ====== */
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
@@ -31,11 +30,7 @@
       color: var(--fg);
     }
 
-    .wrap {
-      max-width: 980px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
+    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
 
     .card {
       background: var(--card);
@@ -45,36 +40,14 @@
     }
 
     .muted { opacity: .85; font-size: 13px; color: var(--muted); }
-
     a { color: var(--link); }
+    hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
 
-    hr {
-      border: 0;
-      border-top: 1px solid var(--border);
-      margin: 14px 0;
-    }
-
-    /* ====== 表单布局：桌面两列，移动端单列 ====== */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-    }
-
-    /* 关键：grid 子项允许收缩，避免溢出/重叠 */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
     .grid > * { min-width: 0; }
+    .full { grid-column: 1 / -1; min-width: 0; }
 
-    .full {
-      grid-column: 1 / -1;
-      min-width: 0;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      opacity: .92;
-      margin-bottom: 6px;
-    }
+    label { display:block; font-size: 13px; opacity:.92; margin-bottom:6px; }
 
     input, select {
       width: 100%;
@@ -87,8 +60,7 @@
       outline: none;
     }
 
-    /* ====== 时间设置行：启用(窄) + start/end(宽)，并确保不重叠 ====== */
-    .time-grid {
+    .time-grid{
       grid-column: 1 / -1;
       display: grid;
       grid-template-columns: minmax(110px, 150px) 1fr 1fr;
@@ -97,14 +69,7 @@
     }
     .time-grid > * { min-width: 0; }
 
-    /* ====== 按钮/行布局 ====== */
-    .row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      min-width: 0;
-    }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; min-width:0; }
 
     button {
       padding: 10px 14px;
@@ -115,7 +80,7 @@
       cursor: pointer;
       max-width: 100%;
     }
-    button:disabled { opacity: .6; cursor: not-allowed; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
 
     pre {
       white-space: pre-wrap;
@@ -127,49 +92,51 @@
       overflow: auto;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 640px; /* 让手机端横向滚动而不是挤爆布局 */
-    }
-    td, th {
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      padding: 8px;
-      font-size: 13px;
-      vertical-align: top;
-    }
-
-    .table-wrap {
+    .table-wrap{
       width: 100%;
       overflow-x: auto;
       border-radius: var(--radius2);
       border: 1px solid var(--border);
       background: rgba(0,0,0,.12);
     }
-    .table-wrap table { border: 0; }
 
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.15);
-      font-size: 12px;
-      opacity: .9;
-      margin-left: 6px;
+    table{ width:100%; border-collapse: collapse; min-width: 720px; }
+    td, th{ border-bottom: 1px solid rgba(255,255,255,.10); padding: 8px; font-size: 13px; vertical-align: top; }
+
+    .pill{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.15);
+      font-size:12px;
+      opacity:.9;
+      margin-left:6px;
     }
 
-    /* ====== 响应式断点：小屏变单列 ====== */
+    .thumb{
+      width: 96px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      display:block;
+    }
+
+    .badge-img{
+      height: 26px;
+      max-width: 100%;
+      vertical-align: middle;
+    }
+
     @media (max-width: 720px){
-      .wrap { padding: 0 12px; }
-      .grid { grid-template-columns: 1fr; }
+      .wrap{ padding: 0 12px; }
+      .grid{ grid-template-columns: 1fr; }
     }
 
-    /* 更窄屏：时间区变“启用一行 + start/end 两列” */
     @media (max-width: 520px){
-      .time-grid {
-        grid-template-columns: 1fr;
-      }
-      .time-grid .time-pair {
+      .time-grid{ grid-template-columns: 1fr; }
+      .time-grid .time-pair{
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: var(--gap);
@@ -177,9 +144,8 @@
       .time-grid .time-pair > * { min-width: 0; }
     }
 
-    /* 极窄屏：start/end 也堆叠，绝不重叠 */
     @media (max-width: 380px){
-      .time-grid .time-pair { grid-template-columns: 1fr; }
+      .time-grid .time-pair{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -204,7 +170,7 @@
 
           <div>
             <label>视频格式代码（下载用）</label>
-            <input name="video_format" placeholder="例如 251 / 137+140 等">
+            <input name="video_format" placeholder="例如 251 / 137+140 / bestvideo+bestaudio 等">
           </div>
 
           <div class="full">
@@ -212,7 +178,6 @@
             <input name="video_link" required placeholder="https://www.youtube.com/watch?v=...">
           </div>
 
-          <!-- 时间设置：启用(窄) + start/end(宽) -->
           <div class="time-grid">
             <div>
               <label>启用指定时间段</label>
@@ -222,7 +187,6 @@
               </select>
             </div>
 
-            <!-- 在窄屏时 start/end 作为一组做两列 -->
             <div class="time-pair" style="display: contents;">
               <div>
                 <label>开始时间</label>
@@ -275,6 +239,51 @@
     }[c]));
   }
 
+  function parseYouTubeId(input){
+    try{
+      const u = new URL(input);
+      // watch?v=
+      const v = u.searchParams.get("v");
+      if (v) return v;
+
+      // youtu.be/<id>
+      if (u.hostname.includes("youtu.be")) {
+        const id = u.pathname.split("/").filter(Boolean)[0];
+        if (id) return id;
+      }
+
+      // shorts/<id>
+      const parts = u.pathname.split("/").filter(Boolean);
+      const shortsIdx = parts.indexOf("shorts");
+      if (shortsIdx >= 0 && parts[shortsIdx+1]) return parts[shortsIdx+1];
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function ytThumbFromId(id){
+    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+  }
+
+  function shieldDownloadBadge(resolution){
+    // static/v1 避免 label-message-color 的连字符分隔坑
+    const label = "YouTube";
+    const message = resolution
+      ? `下载zip（经Worker） 🎞️ ${resolution}`
+      : `下载zip（经Worker）`;
+
+    const url = new URL("https://img.shields.io/static/v1");
+    url.searchParams.set("label", label);
+    url.searchParams.set("message", message);
+    url.searchParams.set("color", "FF0000");
+    url.searchParams.set("style", "plastic");
+    url.searchParams.set("logo", "youtube");
+    url.searchParams.set("logoColor", "white");
+    return url.toString();
+  }
+
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
     let html = `<div class="table-wrap"><table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
@@ -300,44 +309,6 @@
     return `${x.toFixed(i===0?0:2)} ${units[i]}`;
   }
 
-  function renderArtifacts(runId, requestId, artifactsJson){
-    const arts = artifactsJson.artifacts || [];
-    if(!arts.length){
-      $("artifacts").innerHTML = "<div class='muted'>（该 run 没有 artifacts）</div>";
-      return;
-    }
-
-    const queryName = `query-result-${requestId}`;
-    const downloadName = `downloaded-videos-${requestId}`;
-
-    let html = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>`;
-
-    for(const a of arts){
-      const name = a.name;
-      const size = a.size_in_bytes;
-
-      const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
-      const ghUi = `https://github.com/pdahd/ytdlp-actions-panel/actions/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(a.id)}`;
-
-      const badges = [];
-      if(name === queryName) badges.push(`<span class="pill">query</span>`);
-      if(name === downloadName) badges.push(`<span class="pill">download</span>`);
-
-      html += `<tr>
-        <td>${esc(name)} ${badges.join(" ")}</td>
-        <td>${esc(humanBytes(size))}</td>
-        <td>
-          <a href="${proxyZip}">下载zip（经Worker）</a>
-          &nbsp;|&nbsp;
-          <a href="${ghUi}" target="_blank">GitHub链接</a>
-        </td>
-      </tr>`;
-    }
-
-    html += "</tbody></table></div>";
-    $("artifacts").innerHTML = html;
-  }
-
   async function fetchJSON(path){
     const r = await fetch(WORKER_BASE + path, { credentials: "include" });
     const t = await r.text();
@@ -355,6 +326,82 @@
     const t = await r.text();
     if(!r.ok) throw new Error(t);
     return JSON.parse(t);
+  }
+
+  async function downloadZipAndExtractText(runId, artifactName, targetSuffix){
+    const zipResp = await fetch(
+      WORKER_BASE + `/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(artifactName)}`,
+      { credentials:"include" }
+    );
+    if(!zipResp.ok){
+      throw new Error(await zipResp.text());
+    }
+    const buf = await zipResp.arrayBuffer();
+    const files = unzipSync(new Uint8Array(buf));
+    const key = Object.keys(files).find(k => k.endsWith(targetSuffix));
+    if(!key) throw new Error(`zip 中未找到 ${targetSuffix}`);
+    return strFromU8(files[key]);
+  }
+
+  async function tryLoadMeta(runId, requestId, artifactsJson){
+    const metaName = `meta-${requestId}`;
+    const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
+    if(!exists) return null;
+
+    const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
+    return JSON.parse(txt);
+  }
+
+  function renderArtifacts(runId, requestId, artifactsJson, meta, thumbUrlFallback){
+    const arts = artifactsJson.artifacts || [];
+    if(!arts.length){
+      $("artifacts").innerHTML = "<div class='muted'>（该 run 没有 artifacts）</div>";
+      return;
+    }
+
+    const queryName = `query-result-${requestId}`;
+    const downloadName = `downloaded-videos-${requestId}`;
+
+    const thumbUrl = meta?.thumbnail || thumbUrlFallback || "";
+
+    let html = `<div class="table-wrap"><table>
+      <thead><tr><th>预览</th><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>`;
+
+    for(const a of arts){
+      const name = a.name;
+      const size = a.size_in_bytes;
+
+      const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
+      const ghUi = `https://github.com/pdahd/ytdlp-actions-panel/actions/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(a.id)}`;
+
+      const badges = [];
+      if(name === queryName) badges.push(`<span class="pill">query</span>`);
+      if(name === downloadName) badges.push(`<span class="pill">download</span>`);
+
+      // “下载zip（经Worker）”按钮：对 downloaded-videos 用 YouTube 徽章（含真实分辨率）
+      let workerDownloadHtml = `<a href="${proxyZip}">下载zip（经Worker）</a>`;
+      if(name === downloadName){
+        const res = meta?.selected?.resolution || null;
+        const badgeUrl = shieldDownloadBadge(res);
+        workerDownloadHtml = `<a href="${proxyZip}">
+          <img class="badge-img" src="${badgeUrl}" alt="download badge">
+        </a>`;
+      }
+
+      html += `<tr>
+        <td>${thumbUrl ? `<img class="thumb" src="${esc(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</td>
+        <td>${esc(name)} ${badges.join(" ")}</td>
+        <td>${esc(humanBytes(size))}</td>
+        <td>
+          ${workerDownloadHtml}
+          &nbsp;|&nbsp;
+          <a href="${ghUi}" target="_blank">GitHub链接</a>
+        </td>
+      </tr>`;
+    }
+
+    html += "</tbody></table></div>";
+    $("artifacts").innerHTML = html;
   }
 
   $("f").addEventListener("submit", async (e) => {
@@ -386,6 +433,9 @@
       $("btn").disabled = false;
       return;
     }
+
+    const vid = parseYouTubeId(inputs.video_link);
+    const thumbFallback = ytThumbFromId(vid);
 
     await postJSON("/dispatch", { ref: "main", inputs });
     $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
@@ -419,31 +469,29 @@
       await sleep(2000);
     }
 
+    // completed 后：加载 artifacts + 尝试读取 meta.json
+    let arts = null;
+    let meta = null;
     try {
       $("artNote").textContent = "正在加载 artifacts...";
-      const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
-      renderArtifacts(runId, request_id, arts);
-      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`;
+      arts = await fetchJSON(`/artifacts?run_id=${runId}`);
+      meta = await tryLoadMeta(runId, request_id, arts);
+      renderArtifacts(runId, request_id, arts, meta, thumbFallback);
+      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
+        + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
     } catch (err) {
-      $("artNote").textContent = "加载 artifacts 失败：" + String(err);
+      $("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
     }
 
+    // 查询：仍然展示 formats.txt
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
       $("status").textContent = "查询已完成，正在获取 formats.txt ...";
-
-      const zipResp = await fetch(WORKER_BASE + `/artifact-zip?run_id=${runId}&name=${encodeURIComponent(artName)}`, { credentials:"include" });
-      if(!zipResp.ok){
-        $("result").textContent = "下载查询结果 artifact 失败：" + await zipResp.text();
-      }else{
-        const buf = await zipResp.arrayBuffer();
-        const files = unzipSync(new Uint8Array(buf));
-        const key = Object.keys(files).find(k => k.endsWith("formats.txt"));
-        if(!key){
-          $("result").textContent = "zip 中未找到 formats.txt";
-        }else{
-          $("result").textContent = strFromU8(files[key]);
-        }
+      try{
+        const txt = await downloadZipAndExtractText(runId, artName, "formats.txt");
+        $("result").textContent = txt;
+      }catch(e){
+        $("result").textContent = "下载查询结果 artifact 失败：" + String(e);
       }
     } else {
       $("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
