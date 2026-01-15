@@ -19,6 +19,7 @@
     a { color:#9db2ff; }
     .row { display:flex; gap: 10px; align-items:center; flex-wrap:wrap; }
     .muted{ opacity:.8; font-size:13px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.15); font-size:12px; opacity:.9; }
   </style>
 </head>
 
@@ -26,7 +27,7 @@
   <div class="wrap">
     <div class="card">
       <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
-      <div class="muted">网页表单 → Cloudflare Worker → workflow_dispatch → 轮询 run/jobs → “查询”完成后展示 formats.txt</div>
+      <div class="muted">网页表单 → Cloudflare Worker → workflow_dispatch → 轮询 run/jobs → 展示结果 + artifacts 下载</div>
 
       <hr style="border:0;border-top:1px solid rgba(255,255,255,.12);margin:14px 0;">
 
@@ -78,7 +79,12 @@
         <div><b>运行信息</b></div>
         <div class="muted" id="runMeta"></div>
       </div>
+
       <div id="steps"></div>
+
+      <h3 style="margin-top:16px;">Artifacts（构建工件）</h3>
+      <div class="muted" id="artNote">（运行完成后自动加载）</div>
+      <div id="artifacts"></div>
 
       <h3 style="margin-top:16px;">查询结果（formats.txt）</h3>
       <pre id="result">(等待查询完成...)</pre>
@@ -94,21 +100,77 @@
   const sleep = (ms) => new Promise(r=>setTimeout(r, ms));
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
     let html = "<table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>";
     for(const job of jobs){
       for(const s of (job.steps || [])){
         html += `<tr>
-          <td>${job.name || ""}</td>
-          <td>${s.name || ""}</td>
-          <td>${s.status || ""}</td>
-          <td>${s.conclusion || ""}</td>
+          <td>${esc(job.name || "")}</td>
+          <td>${esc(s.name || "")}</td>
+          <td>${esc(s.status || "")}</td>
+          <td>${esc(s.conclusion || "")}</td>
         </tr>`;
       }
     }
     html += "</tbody></table>";
     $("steps").innerHTML = html;
+  }
+
+  function humanBytes(n){
+    if (n == null) return "";
+    const units = ["B","KB","MB","GB"];
+    let i = 0, x = Number(n);
+    while (x >= 1024 && i < units.length-1){ x/=1024; i++; }
+    return `${x.toFixed(i===0?0:2)} ${units[i]}`;
+  }
+
+  function renderArtifacts(runId, requestId, artifactsJson){
+    const arts = artifactsJson.artifacts || [];
+    if(!arts.length){
+      $("artifacts").innerHTML = "<div class='muted'>（该 run 没有 artifacts）</div>";
+      return;
+    }
+
+    // 我们关心的两个名字（按你的 workflow 命名）
+    const queryName = `query-result-${requestId}`;
+    const downloadName = `downloaded-videos-${requestId}`;
+
+    let html = "<table><thead><tr><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>";
+
+    for(const a of arts){
+      const name = a.name;
+      const size = a.size_in_bytes;
+
+      // 走 Worker 代理下载（不依赖 GitHub 登录态）
+      const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
+
+      // 走 GitHub UI 下载（可能需要登录）
+      const ghUi = `https://github.com/pdahd/ytdlp-actions-panel/actions/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(a.id)}`;
+
+      const badges = [];
+      if(name === queryName) badges.push(`<span class="pill">query</span>`);
+      if(name === downloadName) badges.push(`<span class="pill">download</span>`);
+
+      html += `<tr>
+        <td>${esc(name)} ${badges.join(" ")}</td>
+        <td>${esc(humanBytes(size))}</td>
+        <td>
+          <a href="${proxyZip}">下载zip（经Worker）</a>
+          &nbsp;|&nbsp;
+          <a href="${ghUi}" target="_blank">GitHub链接</a>
+        </td>
+      </tr>`;
+    }
+
+    html += "</tbody></table>";
+    $("artifacts").innerHTML = html;
   }
 
   async function fetchJSON(path){
@@ -133,9 +195,12 @@
   $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("btn").disabled = true;
+
     $("result").textContent = "(等待查询完成...)";
     $("steps").innerHTML = "";
     $("runMeta").textContent = "";
+    $("artifacts").innerHTML = "";
+    $("artNote").textContent = "（运行完成后自动加载）";
     $("status").textContent = "正在触发工作流...";
 
     const fd = new FormData(e.target);
@@ -192,7 +257,17 @@
       await sleep(2000);
     }
 
-    // 4) 查询：拉取 artifact zip，解压 formats.txt
+    // 4) completed 后：加载 artifacts 列表（新增）
+    try {
+      $("artNote").textContent = "正在加载 artifacts...";
+      const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
+      renderArtifacts(runId, request_id, arts);
+      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`;
+    } catch (err) {
+      $("artNote").textContent = "加载 artifacts 失败：" + String(err);
+    }
+
+    // 5) 查询：拉取 query-result-<request_id> 并展示 formats.txt
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
       $("status").textContent = "查询已完成，正在获取 formats.txt ...";
@@ -211,7 +286,7 @@
         }
       }
     } else {
-      $("result").textContent = "（非查询模式，或运行失败。请查看上方 steps 状态 / GitHub 运行页面日志。）";
+      $("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
     }
 
     $("btn").disabled = false;
