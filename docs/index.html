@@ -5,21 +5,182 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>yt-dlp Actions Panel</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial; background:#0b1020; color:#e8ecff; margin:0; }
-    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
-    .card { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 18px; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    label { display:block; font-size: 13px; opacity:.9; margin-bottom:6px; }
-    input, select { width:100%; padding:10px 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.25); color:#e8ecff; }
-    button { padding: 10px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.18); background:#4b6bff; color:white; cursor:pointer; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    pre { white-space: pre-wrap; background: rgba(0,0,0,.35); padding: 12px; border-radius: 12px; border:1px solid rgba(255,255,255,.12); }
-    table { width:100%; border-collapse: collapse; }
-    td, th { border-bottom: 1px solid rgba(255,255,255,.10); padding: 8px; font-size: 13px; vertical-align: top; }
-    a { color:#9db2ff; }
-    .row { display:flex; gap: 10px; align-items:center; flex-wrap:wrap; }
-    .muted{ opacity:.8; font-size:13px; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.15); font-size:12px; opacity:.9; }
+    /* ====== 修复核心：避免 width + padding 溢出 ====== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root{
+      --bg: #0b1020;
+      --fg: #e8ecff;
+      --card: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.12);
+      --border2: rgba(255,255,255,.18);
+      --muted: rgba(232,236,255,.80);
+      --input-bg: rgba(0,0,0,.25);
+      --pre-bg: rgba(0,0,0,.35);
+      --btn: #4b6bff;
+      --link: #9db2ff;
+      --gap: 12px;
+      --radius: 16px;
+      --radius2: 12px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .muted { opacity: .85; font-size: 13px; color: var(--muted); }
+
+    a { color: var(--link); }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 14px 0;
+    }
+
+    /* ====== 表单布局：桌面两列，移动端单列 ====== */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+    }
+
+    /* 关键：grid 子项允许收缩，避免溢出/重叠 */
+    .grid > * { min-width: 0; }
+
+    .full {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      opacity: .92;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px 12px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border2);
+      background: var(--input-bg);
+      color: var(--fg);
+      outline: none;
+    }
+
+    /* ====== 时间设置行：启用(窄) + start/end(宽)，并确保不重叠 ====== */
+    .time-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(110px, 150px) 1fr 1fr;
+      gap: var(--gap);
+      align-items: end;
+    }
+    .time-grid > * { min-width: 0; }
+
+    /* ====== 按钮/行布局 ====== */
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    button {
+      padding: 10px 14px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border2);
+      background: var(--btn);
+      color: #fff;
+      cursor: pointer;
+      max-width: 100%;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--pre-bg);
+      padding: 12px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px; /* 让手机端横向滚动而不是挤爆布局 */
+    }
+    td, th {
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      padding: 8px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.12);
+    }
+    .table-wrap table { border: 0; }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.15);
+      font-size: 12px;
+      opacity: .9;
+      margin-left: 6px;
+    }
+
+    /* ====== 响应式断点：小屏变单列 ====== */
+    @media (max-width: 720px){
+      .wrap { padding: 0 12px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* 更窄屏：时间区变“启用一行 + start/end 两列” */
+    @media (max-width: 520px){
+      .time-grid {
+        grid-template-columns: 1fr;
+      }
+      .time-grid .time-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--gap);
+      }
+      .time-grid .time-pair > * { min-width: 0; }
+    }
+
+    /* 极窄屏：start/end 也堆叠，绝不重叠 */
+    @media (max-width: 380px){
+      .time-grid .time-pair { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
@@ -29,7 +190,7 @@
       <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
       <div class="muted">网页表单 → Cloudflare Worker → workflow_dispatch → 轮询 run/jobs → 展示结果 + artifacts 下载</div>
 
-      <hr style="border:0;border-top:1px solid rgba(255,255,255,.12);margin:14px 0;">
+      <hr>
 
       <form id="f">
         <div class="grid">
@@ -40,29 +201,37 @@
               <option>下载</option>
             </select>
           </div>
+
           <div>
             <label>视频格式代码（下载用）</label>
             <input name="video_format" placeholder="例如 251 / 137+140 等">
           </div>
-          <div style="grid-column: 1 / -1;">
+
+          <div class="full">
             <label>YouTube 视频链接</label>
             <input name="video_link" required placeholder="https://www.youtube.com/watch?v=...">
           </div>
-          <div>
-            <label>启用指定时间段</label>
-            <select name="enable_sections">
-              <option>否</option>
-              <option>是</option>
-            </select>
-          </div>
-          <div class="row">
-            <div style="flex:1">
-              <label>开始时间</label>
-              <input name="start_time" placeholder="mm:ss 或 hh:mm:ss">
+
+          <!-- 时间设置：启用(窄) + start/end(宽) -->
+          <div class="time-grid">
+            <div>
+              <label>启用指定时间段</label>
+              <select name="enable_sections">
+                <option>否</option>
+                <option>是</option>
+              </select>
             </div>
-            <div style="flex:1">
-              <label>结束时间</label>
-              <input name="end_time" placeholder="mm:ss 或 hh:mm:ss">
+
+            <!-- 在窄屏时 start/end 作为一组做两列 -->
+            <div class="time-pair" style="display: contents;">
+              <div>
+                <label>开始时间</label>
+                <input name="start_time" placeholder="mm:ss 或 hh:mm:ss">
+              </div>
+              <div>
+                <label>结束时间</label>
+                <input name="end_time" placeholder="mm:ss 或 hh:mm:ss">
+              </div>
             </div>
           </div>
         </div>
@@ -108,7 +277,7 @@
 
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
-    let html = "<table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>";
+    let html = `<div class="table-wrap"><table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
     for(const job of jobs){
       for(const s of (job.steps || [])){
         html += `<tr>
@@ -119,7 +288,7 @@
         </tr>`;
       }
     }
-    html += "</tbody></table>";
+    html += "</tbody></table></div>";
     $("steps").innerHTML = html;
   }
 
@@ -138,20 +307,16 @@
       return;
     }
 
-    // 我们关心的两个名字（按你的 workflow 命名）
     const queryName = `query-result-${requestId}`;
     const downloadName = `downloaded-videos-${requestId}`;
 
-    let html = "<table><thead><tr><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>";
+    let html = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>`;
 
     for(const a of arts){
       const name = a.name;
       const size = a.size_in_bytes;
 
-      // 走 Worker 代理下载（不依赖 GitHub 登录态）
       const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
-
-      // 走 GitHub UI 下载（可能需要登录）
       const ghUi = `https://github.com/pdahd/ytdlp-actions-panel/actions/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(a.id)}`;
 
       const badges = [];
@@ -169,7 +334,7 @@
       </tr>`;
     }
 
-    html += "</tbody></table>";
+    html += "</tbody></table></div>";
     $("artifacts").innerHTML = html;
   }
 
@@ -222,11 +387,9 @@
       return;
     }
 
-    // 1) dispatch
     await postJSON("/dispatch", { ref: "main", inputs });
     $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
 
-    // 2) resolve run_id
     let run = null;
     for(let i=0;i<45;i++){
       const res = await fetchJSON(`/resolve?request_id=${encodeURIComponent(request_id)}`);
@@ -243,7 +406,6 @@
     $("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
     $("status").textContent = "运行中...";
 
-    // 3) poll status + jobs
     let runInfo = null;
     while(true){
       runInfo = await fetchJSON(`/run?run_id=${runId}`);
@@ -257,7 +419,6 @@
       await sleep(2000);
     }
 
-    // 4) completed 后：加载 artifacts 列表（新增）
     try {
       $("artNote").textContent = "正在加载 artifacts...";
       const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
@@ -267,7 +428,6 @@
       $("artNote").textContent = "加载 artifacts 失败：" + String(err);
     }
 
-    // 5) 查询：拉取 query-result-<request_id> 并展示 formats.txt
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
       $("status").textContent = "查询已完成，正在获取 formats.txt ...";
