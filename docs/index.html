@@ -38,21 +38,24 @@
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* ===== 表格“金属框 + 豆腐块”主题 ===== */
+      /* ===== 表格：金属框 + 键帽单元格 ===== */
       --metal-a: #4a556f;
       --metal-b: #1a2136;
       --metal-c: #0c1224;
 
-      --tbl-bed-a: #0f1836; /* 桌面底 */
-      --tbl-bed-b: #0a1127;
+      /* 桌面底（比上一版更浅，让“键帽”更突出） */
+      --tbl-bed-a: #1b2a56;
+      --tbl-bed-b: #0f1a3b;
 
-      --cell-a: #16214a;    /* 豆腐块底色 */
-      --cell-b: #0f1838;
-      --cell-a2:#141e44;    /* 交替行 */
-      --cell-b2:#0d1733;
+      /* 键帽底色（仍偏深，但比前一版略亮一些） */
+      --key-a: #21306a;
+      --key-b: #121c44;
 
-      --cell-border: rgba(255,255,255,.14);
-      --cell-border2: rgba(0,0,0,.55);
+      --key-a2:#1f2c62;   /* 交替行 */
+      --key-b2:#10193e;
+
+      --key-border: rgba(255,255,255,.16);
+      --key-border2: rgba(0,0,0,.65);
     }
 
     body{
@@ -168,30 +171,22 @@
       overflow:auto;
     }
 
-    /* ======= 表格：金属薄外框 + 内部豆腐块 ======= */
+    /* ======= 表格：金属薄外框 + 更浅桌面底 + 键帽单元格 ======= */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
-
-      /* 外框变薄 */
       padding: 3px;
       border-radius: 16px;
-
-      /* 金属凹凸：多层渐变 */
       background:
         linear-gradient(180deg, rgba(255,255,255,.12), transparent 30%) ,
         linear-gradient(135deg, var(--metal-a) 0%, var(--metal-b) 38%, var(--metal-c) 100%);
       border: 1px solid rgba(255,255,255,.16);
-
-      /* 金属凹凸阴影 */
       box-shadow:
         0 12px 22px rgba(0,0,0,.40),
         inset 0 1px 0 rgba(255,255,255,.18),
         inset 0 -1px 0 rgba(0,0,0,.55);
       position: relative;
     }
-
-    /* 金属边缘高光细线（更精致、不会显厚） */
     .table-wrap::before{
       content:"";
       position:absolute;
@@ -201,27 +196,25 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
       pointer-events:none;
-      opacity: .8;
+      opacity: .85;
     }
 
     table{
       width:100%;
       min-width: 720px;
-
       border-collapse: separate;
-      /* 关键：用间距做“豆腐块分隔”，不靠粗线框 */
       border-spacing: 7px;
-
       border-radius: 13px;
       overflow: hidden;
 
-      /* 桌面底色（实心） */
-      background: linear-gradient(180deg, var(--tbl-bed-a), var(--tbl-bed-b));
+      /* 桌面底：变浅 */
+      background:
+        radial-gradient(900px 300px at 20% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--tbl-bed-a), var(--tbl-bed-b));
 
-      /* 内凹 */
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.08),
-        inset 0 -12px 24px rgba(0,0,0,.45);
+        inset 0 1px 0 rgba(255,255,255,.10),
+        inset 0 -14px 26px rgba(0,0,0,.45);
     }
 
     th, td{
@@ -231,7 +224,7 @@
       border-radius: 12px;
     }
 
-    /* 表头：保持原来的色系，但做成“凸起块” */
+    /* 表头：凸起块（保持配色不变） */
     th{
       position: sticky;
       top: 0;
@@ -239,49 +232,82 @@
       text-align: left;
       border: 1px solid rgba(255,255,255,.16);
       box-shadow:
-        0 10px 18px rgba(0,0,0,.38),
+        0 12px 20px rgba(0,0,0,.40),
         inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -10px 18px rgba(0,0,0,.35);
+        inset 0 -12px 18px rgba(0,0,0,.40);
     }
 
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(95,124,255,.75), rgba(25,33,64,1));
+      background: linear-gradient(180deg, rgba(95,124,255,.78), rgba(25,33,64,1));
     }
-
     .thead-arts th{
-      background: linear-gradient(180deg, rgba(165,110,255,.72), rgba(25,33,64,1));
+      background: linear-gradient(180deg, rgba(165,110,255,.74), rgba(25,33,64,1));
     }
 
-    /* 豆腐块：每个 td 都是独立立体块 */
+    /* ===== 键帽单元格：核心 ===== */
     tbody td{
+      position: relative;
+
+      /* 键帽底色 */
       background:
-        radial-gradient(120px 90px at 18% 18%, rgba(255,255,255,.10), transparent 55%),
-        linear-gradient(180deg, var(--cell-a), var(--cell-b));
-      border: 1px solid var(--cell-border);
+        radial-gradient(140px 90px at 18% 18%, rgba(255,255,255,.12), transparent 58%),
+        linear-gradient(180deg, var(--key-a), var(--key-b));
+
+      border: 1px solid var(--key-border);
+
+      /* 外凸 + 内凹 */
       box-shadow:
-        0 10px 18px rgba(0,0,0,.42),               /* 外凸 */
-        inset 0 1px 0 rgba(255,255,255,.14),       /* 上高光 */
-        inset 0 -12px 18px rgba(0,0,0,.38);        /* 下阴影 */
+        0 12px 18px rgba(0,0,0,.46),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -14px 22px rgba(0,0,0,.45);
     }
 
     tbody tr:nth-child(even) td{
       background:
-        radial-gradient(120px 90px at 18% 18%, rgba(255,255,255,.10), transparent 55%),
-        linear-gradient(180deg, var(--cell-a2), var(--cell-b2));
+        radial-gradient(140px 90px at 18% 18%, rgba(255,255,255,.12), transparent 58%),
+        linear-gradient(180deg, var(--key-a2), var(--key-b2));
+    }
+
+    /* “键帽亮边/描边”（加强存在感） */
+    tbody td::after{
+      content:"";
+      position:absolute;
+      inset: 1px;
+      border-radius: 11px;
+      pointer-events:none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.14),
+        inset 0 -1px 0 rgba(0,0,0,.70),
+        0 0 0 1px rgba(255,255,255,.06);
+      opacity: .95;
+    }
+
+    /* “键帽反光层”（更像金属键帽） */
+    tbody td::before{
+      content:"";
+      position:absolute;
+      inset: 0;
+      border-radius: 12px;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.14), transparent 40%),
+        radial-gradient(220px 120px at 20% 0%, rgba(255,255,255,.16), transparent 60%);
+      mix-blend-mode: screen;
+      opacity: .70;
     }
 
     tbody tr:hover td{
       background:
-        radial-gradient(140px 100px at 18% 18%, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(180deg, #1a285a, #0e1734);
-      border-color: rgba(190,210,255,.18);
+        radial-gradient(160px 100px at 18% 18%, rgba(255,255,255,.16), transparent 62%),
+        linear-gradient(180deg, #2a3a7b, #121c44);
+      border-color: rgba(190,210,255,.20);
     }
 
     /* 结论上色 */
-    .c-success{ color: var(--ok); font-weight: 800; }
+    .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
-    .c-skipped{ color: var(--skip); font-weight: 800; }
+    .c-skipped{ color: var(--skip); font-weight: 900; }
 
     .pill{
       display:inline-block;
@@ -291,7 +317,7 @@
       font-size:12px;
       opacity:.95;
       margin-left:6px;
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.06);
     }
 
     .thumb{
@@ -302,14 +328,14 @@
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.25);
       display:block;
-      box-shadow: 0 10px 22px rgba(0,0,0,.45);
+      box-shadow: 0 12px 22px rgba(0,0,0,.55);
     }
 
     .badge-img{
       height: 28px;
       max-width: 100%;
       vertical-align: middle;
-      filter: drop-shadow(0 10px 16px rgba(0,0,0,.48));
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.52));
     }
 
     .dl-btn{
@@ -320,14 +346,14 @@
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,.18);
       background:
-        radial-gradient(120px 80px at 20% 20%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(140px 90px at 18% 18%, rgba(255,255,255,.12), transparent 60%),
         linear-gradient(180deg, #2a355f, #1a2244);
       color: rgba(238,242,255,.95);
       text-decoration: none;
       box-shadow:
-        0 10px 18px rgba(0,0,0,.40),
-        inset 0 1px 0 rgba(255,255,255,.12),
-        inset 0 -12px 18px rgba(0,0,0,.35);
+        0 12px 18px rgba(0,0,0,.46),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -14px 22px rgba(0,0,0,.45);
       white-space: nowrap;
     }
     .dl-btn:active{ transform: translateY(1px); }
@@ -381,7 +407,7 @@
     .name-sub{
       margin-top: 4px;
       font-size: 12px;
-      color: rgba(238,242,255,.70);
+      color: rgba(238,242,255,.72);
       word-break: break-all;
     }
 
