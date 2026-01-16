@@ -94,33 +94,75 @@
       margin: 14px 0;
     }
 
-    /* ===== 深色实体面板：悬浮在浅灰背景上（更稳定，不会顶部断层） ===== */
+    /* ===== 科幻金属面板（更亮的枪灰+冷光，非过暗） ===== */
     .card{
       position: relative;
       border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(18,26,55,.94), rgba(10,16,34,.94)) padding-box,
-        linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08), rgba(255,255,255,.18)) border-box;
-      border: 1px solid transparent;
-      box-shadow: 0 22px 55px rgba(0,0,0,.45);
       padding: 18px;
       overflow: hidden;
+
+      /* 多层：冷光 + 金属底色 + 轻微“全息”色偏 */
+      background:
+        radial-gradient(900px 380px at 18% -10%, rgba(120, 210, 255, .32), transparent 60%),
+        radial-gradient(700px 320px at 110% 30%, rgba(255, 120, 220, .16), transparent 55%),
+        radial-gradient(520px 260px at 40% 120%, rgba(120, 255, 220, .10), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,0) 42%),
+        linear-gradient(180deg, #2f3e66 0%, #1a2647 45%, #111a33 100%);
+
+      /* 亮一点的金属边 */
+      border: 1px solid rgba(200, 225, 255, .28);
+
+      /* 立体阴影（外凸）+ 金属内高光（内凹） */
+      box-shadow:
+        0 20px 55px rgba(0,0,0,.28),
+        0 6px 18px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -24px 60px rgba(0,0,0,.35);
     }
+
+    /* 顶部“能量导轨”高光条（替换原来的 stripe） */
     .card::before{
       content:"";
       position:absolute;
-      left: -10%;
-      right: -10%;
-      top: -28px;
+      left: -8%;
+      right: -8%;
+      top: -24px;
       height: 74px;
-      background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(255,255,255,.16) 20%,
-        rgba(255,255,255,.06) 45%,
-        rgba(255,255,255,.14) 70%,
-        transparent 100%);
-      transform: rotate(-2deg);
       pointer-events:none;
+      transform: rotate(-2deg);
+
+      background:
+        linear-gradient(90deg,
+          transparent 0%,
+          rgba(255,255,255,.22) 18%,
+          rgba(120,210,255,.10) 35%,
+          rgba(255,255,255,.10) 52%,
+          rgba(255,120,220,.10) 70%,
+          rgba(255,255,255,.20) 84%,
+          transparent 100%);
+      filter: blur(.2px);
+      opacity: .95;
+    }
+
+    /* 细微“扫描线/拉丝纹理”（很轻，不改变控件颜色） */
+    .card::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(255,255,255,.03) 0px,
+          rgba(255,255,255,.03) 1px,
+          rgba(255,255,255,0) 6px,
+          rgba(255,255,255,0) 10px
+        );
+      opacity: .35;
+
+      /* 让纹理只“叠加质感”，不压暗整体 */
+      mix-blend-mode: overlay;
     }
 
     .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
