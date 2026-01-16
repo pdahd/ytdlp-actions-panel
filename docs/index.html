@@ -56,12 +56,10 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* 通道底色（铜橙槽） */
-      --bed-runs-a: #a85616;
-      --bed-runs-b: #3a1c08;
-
-      --bed-arts-a: #7e3f12;
-      --bed-arts-b: #2a1206;
+      /* ===== 通道底色：纸黄色（你要求替换古铜色） ===== */
+      --paper-a: #f3e8b0;
+      --paper-b: #d8c77a;
+      --paper-c: #b59b45;
     }
 
     /* 回弹露白修复 */
@@ -212,7 +210,7 @@
       opacity: .85;
     }
 
-    /* table 的 background 就是“十字路口/槽宽通道” */
+    /* table background = “通道/槽宽/十字路口”底色（纸黄色） */
     table.tbl{
       width:100%;
       min-width: 720px;
@@ -223,16 +221,9 @@
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.12),
         inset 0 -16px 28px rgba(0,0,0,.45);
-    }
-    table.tbl.runs{
       background:
-        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.10), transparent 55%),
-        linear-gradient(180deg, var(--bed-runs-a), var(--bed-runs-b));
-    }
-    table.tbl.arts{
-      background:
-        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bed-arts-a), var(--bed-arts-b));
+        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.22), transparent 55%),
+        linear-gradient(180deg, var(--paper-a), var(--paper-b) 55%, var(--paper-c));
     }
 
     th, td{
@@ -254,21 +245,20 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* ✅ 运行信息表头：绿色渐变 */
+    /* 运行信息表头：绿色渐变（保留） */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(90,220,140,.88), rgba(10,58,32,1));
     }
 
-    /* ✅ Artifacts 表头：酒红色渐变 */
+    /* Artifacts 表头：恢复紫色渐变（你要求） */
     .thead-arts th{
-      background: linear-gradient(180deg, rgba(170,55,75,.90), rgba(55,12,22,1));
+      background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
 
-    /* ===== 键帽单元格：关键修复（让内容在伪元素之上） ===== */
+    /* 键帽单元格（保持） */
     tbody td{
       position: relative;
-      isolation: isolate; /* 防止 mix-blend-mode 影响外层 */
-
+      isolation: isolate;
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a), var(--key-b));
@@ -282,11 +272,8 @@
         linear-gradient(180deg, var(--key-a2), var(--key-b2));
     }
 
-    /* 伪元素放到底层 */
     tbody td::before,
-    tbody td::after{
-      z-index: 0;
-    }
+    tbody td::after{ z-index: 0; }
 
     tbody td::before{
       content:"";
@@ -321,11 +308,7 @@
       opacity: .55;
     }
 
-    /* 单元格内容层：必须盖过伪元素（动画才可见） */
-    .cell-inner{
-      position: relative;
-      z-index: 2;
-    }
+    .cell-inner{ position: relative; z-index: 2; }
 
     tbody tr:hover td{
       background:
@@ -334,62 +317,11 @@
       border-color: rgba(205,225,255,.22);
     }
 
+    /* Conclusion 仅文字上色（恢复无动画逻辑） */
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
-    .c-running{ color: rgba(238,242,255,.70); font-weight: 900; }
-
-    /* Conclusion 处理中动画：流光条（确保可见） */
-    .procbar{
-      position: relative;
-      z-index: 3;
-      height: 12px;
-      border-radius: 999px;
-      overflow: hidden;
-      width: min(190px, 100%);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.30)),
-        linear-gradient(90deg, rgba(255,180,80,.30), rgba(80,140,255,.30));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -1px 0 rgba(0,0,0,.70),
-        0 10px 16px rgba(0,0,0,.35);
-    }
-    .procbar::before{
-      content:"";
-      position:absolute;
-      inset: -30% -40%;
-      background:
-        repeating-linear-gradient(
-          60deg,
-          rgba(255,255,255,.00) 0px,
-          rgba(255,255,255,.00) 8px,
-          rgba(255,255,255,.18) 12px,
-          rgba(255,255,255,.00) 18px
-        );
-      animation: procStripes 0.9s linear infinite;
-      opacity: .95;
-    }
-    .procbar::after{
-      content:"";
-      position:absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.60), transparent);
-      transform: translateX(-140%);
-      animation: procScan 1.1s ease-in-out infinite;
-      opacity: .75;
-      mix-blend-mode: screen;
-    }
-    @keyframes procStripes{
-      from { transform: translateX(0); }
-      to   { transform: translateX(54px); }
-    }
-    @keyframes procScan{
-      0%   { transform: translateX(-140%); }
-      55%  { transform: translateX(140%); }
-      100% { transform: translateX(140%); }
-    }
 
     .pill{
       display:inline-block;
@@ -700,29 +632,20 @@
 
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
-    let html = `<div class="table-wrap"><table class="tbl runs">
+    let html = `<div class="table-wrap"><table class="tbl">
       <thead class="thead-runs"><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
 
     for(const job of jobs){
       for(const s of (job.steps || [])){
         const status = s.status || "";
         const conc = s.conclusion || "";
-
-        let concInner = `<div class="cell-inner">${esc(conc)}</div>`;
-        let cls = clsForConclusion(conc);
-
-        // 如果在跑（queued / in_progress），或 completed 但 conclusion 还没填（极短窗口），显示动画
-        const isProcessing = (status && status !== "completed") || (status === "completed" && !conc);
-        if (isProcessing) {
-          cls = "c-running";
-          concInner = `<div class="cell-inner"><span class="procbar" title="${esc(status || "running")}"></span></div>`;
-        }
+        const cls = clsForConclusion(conc);
 
         html += `<tr>
           <td><div class="cell-inner">${esc(job.name || "")}</div></td>
           <td><div class="cell-inner">${esc(s.name || "")}</div></td>
           <td><div class="cell-inner">${esc(status)}</div></td>
-          <td class="${cls}">${concInner}</td>
+          <td class="${cls}"><div class="cell-inner">${esc(conc)}</div></td>
         </tr>`;
       }
     }
@@ -799,7 +722,7 @@
     const downloadName = `downloaded-videos-${requestId}`;
     const thumbUrl = meta?.thumbnail || thumbUrlFallback || "";
 
-    let html = `<div class="table-wrap"><table class="tbl arts">
+    let html = `<div class="table-wrap"><table class="tbl">
       <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>下载</th></tr></thead><tbody>`;
 
     for(const a of arts){
