@@ -38,44 +38,43 @@
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* ===== 表格：金属框 + 键帽单元格（更强存在感） ===== */
+      /* ===== 表格：金属框 + 键帽单元格 ===== */
       --metal-a: #5a6684;
       --metal-b: #1b233a;
       --metal-c: #0b1225;
 
-      /* 桌面底（比上一版更浅） */
-      --tbl-bed-a: #243a74;
-      --tbl-bed-b: #121f45;
-
       /* 键帽底色 */
       --key-a:  #2a3f86;
       --key-b:  #15214d;
-
       --key-a2: #28407f;
       --key-b2: #141f49;
-
       --key-border: rgba(255,255,255,.18);
 
       --key-shadow-out: 0 14px 20px rgba(0,0,0,.50);
       --key-shadow-in:
         inset 0 1px 0 rgba(255,255,255,.20),
         inset 0 -16px 26px rgba(0,0,0,.52);
-
       --key-radius: 14px;
+
+      /* ===== 通道底色（你要改的“十字路口/槽宽”） ===== */
+      /* runs 表格通道：橙色铜槽 */
+      --bed-runs-a: #a85616;
+      --bed-runs-b: #3a1c08;
+
+      /* artifacts 表格通道：同逻辑，稍深一点的铜橙 */
+      --bed-arts-a: #7e3f12;
+      --bed-arts-b: #2a1206;
     }
 
-    /* ===== 修复回弹露白：给 html/body 统一深色背景 ===== */
+    /* 回弹露白修复 */
     html{
       height: 100%;
       background-color: var(--bg0);
     }
-
     body{
       margin: 0;
       min-height: 100vh;
       background-color: var(--bg0);
-
-      /* 彻底避免 iOS/Android 橡皮筋回弹露底（你可按需去掉这一行） */
       overscroll-behavior-y: none;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
@@ -189,7 +188,7 @@
       overflow:auto;
     }
 
-    /* ======= 表格：金属薄外框 + 更浅桌面底 + 键帽单元格 ======= */
+    /* ======= 表格容器（金属薄外框） ======= */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -217,19 +216,31 @@
       opacity: .85;
     }
 
-    table{
+    /* 关键：table 的 background 就是你说的“通道/槽宽/十字路口”底色 */
+    table.tbl{
       width:100%;
       min-width: 720px;
       border-collapse: separate;
       border-spacing: 8px;
       border-radius: 13px;
       overflow: hidden;
-      background:
-        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.12), transparent 55%),
-        linear-gradient(180deg, var(--tbl-bed-a), var(--tbl-bed-b));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.12),
         inset 0 -16px 28px rgba(0,0,0,.45);
+    }
+
+    /* ✅ runs 表格通道底色：橙色 */
+    table.tbl.runs{
+      background:
+        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bed-runs-a), var(--bed-runs-b));
+    }
+
+    /* ✅ artifacts 表格通道底色：同逻辑橙色系（更深一点） */
+    table.tbl.arts{
+      background:
+        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, var(--bed-arts-a), var(--bed-arts-b));
     }
 
     th, td{
@@ -251,16 +262,16 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* ✅ 运行信息表头改为棕色渐变 */
+    /* runs 表头棕色（你已确认需要） */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(205,140,70,.88), rgba(65,40,20,1));
     }
-
-    /* Artifacts 表头保持紫色渐变不变 */
+    /* arts 表头紫色 */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
 
+    /* ===== 键帽单元格（保持不变） ===== */
     tbody td{
       position: relative;
       background:
@@ -270,7 +281,6 @@
       box-shadow: var(--key-shadow-out), var(--key-shadow-in);
       overflow: hidden;
     }
-
     tbody tr:nth-child(even) td{
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
@@ -289,7 +299,6 @@
       opacity: .78;
       mix-blend-mode: screen;
     }
-
     tbody td::after{
       content:"";
       position:absolute;
@@ -318,10 +327,66 @@
       border-color: rgba(205,225,255,.22);
     }
 
+    /* 结论上色 */
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
+    .c-running{ color: rgba(238,242,255,.70); font-weight: 900; }
+
+    /* ===== Conclusion 处理中动画（酷炫流光条） ===== */
+    .procbar{
+      position: relative;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      width: min(180px, 100%);
+      margin-top: 2px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.25)),
+        linear-gradient(90deg, rgba(255,180,80,.25), rgba(80,140,255,.25));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -1px 0 rgba(0,0,0,.60),
+        0 10px 16px rgba(0,0,0,.35);
+    }
+    .procbar::before{
+      content:"";
+      position:absolute;
+      inset: -20% -40%;
+      background:
+        repeating-linear-gradient(
+          60deg,
+          rgba(255,255,255,.00) 0px,
+          rgba(255,255,255,.00) 8px,
+          rgba(255,255,255,.18) 12px,
+          rgba(255,255,255,.00) 18px
+        );
+      animation: procStripes 1.0s linear infinite;
+      opacity: .9;
+    }
+    .procbar::after{
+      content:"";
+      position:absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.50), transparent);
+      transform: translateX(-120%);
+      animation: procScan 1.2s ease-in-out infinite;
+      opacity: .7;
+      mix-blend-mode: screen;
+    }
+    @keyframes procStripes{
+      from { transform: translateX(0); }
+      to   { transform: translateX(48px); }
+    }
+    @keyframes procScan{
+      0%   { transform: translateX(-120%); }
+      50%  { transform: translateX(120%); }
+      100% { transform: translateX(120%); }
+    }
+
+    /* 让动画条不被键帽伪元素压住 */
+    .procbar{ z-index: 3; }
 
     .pill{
       display:inline-block;
@@ -428,7 +493,7 @@
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
       .grid{ grid-template-columns: 1fr; }
-      table{ min-width: 680px; border-spacing: 7px; }
+      table.tbl{ min-width: 680px; border-spacing: 7px; }
     }
     @media (max-width: 520px){
       .time-grid{ grid-template-columns: 1fr; }
@@ -438,12 +503,12 @@
         gap: var(--gap);
       }
       .time-grid .time-pair > *{ min-width:0; }
-      table{ border-spacing: 6px; }
+      table.tbl{ border-spacing: 6px; }
     }
     @media (max-width: 380px){
       .time-grid .time-pair{ grid-template-columns: 1fr; }
       .name-main{ max-width: 280px; }
-      table{ border-spacing: 5px; }
+      table.tbl{ border-spacing: 5px; }
     }
   </style>
 </head>
@@ -571,7 +636,6 @@
   function shieldDownloadBadge(resolution){
     const label = "YouTube";
     const message = resolution ? `下载视频zip 🎞️ ${resolution}` : `下载视频zip`;
-
     const url = new URL("https://img.shields.io/static/v1");
     url.searchParams.set("label", label);
     url.searchParams.set("message", message);
@@ -631,21 +695,32 @@
 
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
-    let html = `<div class="table-wrap"><table>
+    let html = `<div class="table-wrap"><table class="tbl runs">
       <thead class="thead-runs"><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
 
     for(const job of jobs){
       for(const s of (job.steps || [])){
+        const status = s.status || "";
         const conc = s.conclusion || "";
-        const cls = clsForConclusion(conc);
+
+        let concHtml = esc(conc);
+        let cls = clsForConclusion(conc);
+
+        // ✅ 非 completed 就显示动画（queued / in_progress）
+        if (status && status !== "completed") {
+          cls = "c-running";
+          concHtml = `<span class="procbar" title="${esc(status)}"></span>`;
+        }
+
         html += `<tr>
           <td>${esc(job.name || "")}</td>
           <td>${esc(s.name || "")}</td>
-          <td>${esc(s.status || "")}</td>
-          <td class="${cls}">${esc(conc)}</td>
+          <td>${esc(status)}</td>
+          <td class="${cls}">${concHtml}</td>
         </tr>`;
       }
     }
+
     html += "</tbody></table></div>";
     $("steps").innerHTML = html;
   }
@@ -701,7 +776,7 @@
   }
 
   function shouldShowArtifact(name){
-    const showMeta = document.getElementById("showMeta").checked;
+    const showMeta = $("showMeta").checked;
     if (name.startsWith("meta-")) return showMeta;
     return true;
   }
@@ -710,7 +785,7 @@
     const artsAll = artifactsJson.artifacts || [];
     const arts = artsAll.filter(a => shouldShowArtifact(a.name));
     if(!arts.length){
-      document.getElementById("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
+      $("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
       return;
     }
 
@@ -718,7 +793,7 @@
     const downloadName = `downloaded-videos-${requestId}`;
     const thumbUrl = meta?.thumbnail || thumbUrlFallback || "";
 
-    let html = `<div class="table-wrap"><table>
+    let html = `<div class="table-wrap"><table class="tbl arts">
       <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>下载</th></tr></thead><tbody>`;
 
     for(const a of arts){
@@ -766,26 +841,26 @@
     }
 
     html += "</tbody></table></div>";
-    document.getElementById("artifacts").innerHTML = html;
+    $("artifacts").innerHTML = html;
   }
 
   let lastArtifacts=null, lastRunId=null, lastReqId=null, lastMeta=null, lastThumbFallback=null;
-  document.getElementById("showMeta").addEventListener("change", () => {
+  $("showMeta").addEventListener("change", () => {
     if(lastArtifacts && lastRunId && lastReqId){
       renderArtifacts(lastRunId, lastReqId, lastArtifacts, lastMeta, lastThumbFallback);
     }
   });
 
-  document.getElementById("f").addEventListener("submit", async (e) => {
+  $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
-    document.getElementById("btn").disabled = true;
+    $("btn").disabled = true;
 
-    document.getElementById("result").textContent = "(等待查询完成...)";
-    document.getElementById("steps").innerHTML = "";
-    document.getElementById("runMeta").textContent = "";
-    document.getElementById("artifacts").innerHTML = "";
-    document.getElementById("artNote").textContent = "（运行完成后自动加载）";
-    document.getElementById("status").textContent = "正在触发工作流...";
+    $("result").textContent = "(等待查询完成...)";
+    $("steps").innerHTML = "";
+    $("runMeta").textContent = "";
+    $("artifacts").innerHTML = "";
+    $("artNote").textContent = "（运行完成后自动加载）";
+    $("status").textContent = "正在触发工作流...";
     renderVideoMeta(null);
 
     const fd = new FormData(e.target);
@@ -803,7 +878,7 @@
 
     if(inputs.action_type === "下载" && !inputs.video_format){
       alert("下载模式需要填写 视频格式代码");
-      document.getElementById("btn").disabled = false;
+      $("btn").disabled = false;
       return;
     }
 
@@ -811,7 +886,7 @@
     const thumbFallback = ytThumbFromId(vid);
 
     await postJSON("/dispatch", { ref: "main", inputs });
-    document.getElementById("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
+    $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
 
     let run = null;
     for(let i=0;i<45;i++){
@@ -820,14 +895,14 @@
       await sleep(1000);
     }
     if(!run){
-      document.getElementById("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
-      document.getElementById("btn").disabled = false;
+      $("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
+      $("btn").disabled = false;
       return;
     }
 
     const runId = run.id;
-    document.getElementById("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
-    document.getElementById("status").textContent = "运行中...";
+    $("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
+    $("status").textContent = "运行中...";
 
     let runInfo = null;
     while(true){
@@ -836,14 +911,14 @@
       renderSteps(jobs);
 
       const st = `${runInfo.status}${runInfo.conclusion ? " / " + runInfo.conclusion : ""}`;
-      document.getElementById("status").textContent = `状态：${st}`;
+      $("status").textContent = `状态：${st}`;
 
       if(runInfo.status === "completed") break;
       await sleep(2000);
     }
 
     try {
-      document.getElementById("artNote").textContent = "正在加载 artifacts...";
+      $("artNote").textContent = "正在加载 artifacts...";
       const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
       const meta = await tryLoadMeta(runId, request_id, arts);
 
@@ -856,26 +931,26 @@
       lastThumbFallback = thumbFallback;
 
       renderArtifacts(runId, request_id, arts, meta, thumbFallback);
-      document.getElementById("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
+      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
         + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
     } catch (err) {
-      document.getElementById("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
+      $("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
     }
 
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
-      document.getElementById("status").textContent = "查询已完成，正在获取 formats.txt ...";
+      $("status").textContent = "查询已完成，正在获取 formats.txt ...";
       try{
         const txt = await downloadZipAndExtractText(runId, artName, "formats.txt");
-        document.getElementById("result").textContent = txt;
+        $("result").textContent = txt;
       }catch(e){
-        document.getElementById("result").textContent = "下载查询结果 artifact 失败：" + String(e);
+        $("result").textContent = "下载查询结果 artifact 失败：" + String(e);
       }
     } else {
-      document.getElementById("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
+      $("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
     }
 
-    document.getElementById("btn").disabled = false;
+    $("btn").disabled = false;
   });
 </script>
 </body>
