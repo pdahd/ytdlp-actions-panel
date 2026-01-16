@@ -43,30 +43,41 @@
       --metal-b: #1b233a;
       --metal-c: #0b1225;
 
-      /* 桌面底：更浅一点，让键帽更突出 */
+      /* 桌面底（比上一版更浅） */
       --tbl-bed-a: #243a74;
       --tbl-bed-b: #121f45;
 
-      /* 键帽底色：略亮 + 更立体 */
+      /* 键帽底色 */
       --key-a:  #2a3f86;
       --key-b:  #15214d;
 
-      --key-a2: #28407f;  /* 交替行 */
+      --key-a2: #28407f;
       --key-b2: #141f49;
 
       --key-border: rgba(255,255,255,.18);
 
-      /* 键帽阴影 */
       --key-shadow-out: 0 14px 20px rgba(0,0,0,.50);
       --key-shadow-in:
         inset 0 1px 0 rgba(255,255,255,.20),
         inset 0 -16px 26px rgba(0,0,0,.52);
 
-      --key-radius: 14px; /* 更像键帽：更圆润 */
+      --key-radius: 14px;
+    }
+
+    /* ===== 修复回弹露白：给 html/body 统一深色背景 ===== */
+    html{
+      height: 100%;
+      background-color: var(--bg0);
     }
 
     body{
       margin: 0;
+      min-height: 100vh;
+      background-color: var(--bg0);
+
+      /* 彻底避免 iOS/Android 橡皮筋回弹露底（你可按需去掉这一行） */
+      overscroll-behavior-y: none;
+
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
       color: var(--text);
       background:
@@ -213,12 +224,9 @@
       border-spacing: 8px;
       border-radius: 13px;
       overflow: hidden;
-
-      /* 桌面底：更浅 + 更有“台面”感 */
       background:
         radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.12), transparent 55%),
         linear-gradient(180deg, var(--tbl-bed-a), var(--tbl-bed-b));
-
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.12),
         inset 0 -16px 28px rgba(0,0,0,.45);
@@ -243,25 +251,24 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
+    /* ✅ 运行信息表头改为棕色渐变 */
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(95,124,255,.82), rgba(25,33,64,1));
+      background: linear-gradient(180deg, rgba(205,140,70,.88), rgba(65,40,20,1));
     }
+
+    /* Artifacts 表头保持紫色渐变不变 */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
 
-    /* ===== 键帽单元格（A+B+C 合体） ===== */
     tbody td{
       position: relative;
-
-      /* 键帽主体：渐变 + 顶部反光点 */
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a), var(--key-b));
-
       border: 1px solid var(--key-border);
       box-shadow: var(--key-shadow-out), var(--key-shadow-in);
-      overflow: hidden; /* 让 ::before/::after 的圆角生效 */
+      overflow: hidden;
     }
 
     tbody tr:nth-child(even) td{
@@ -270,7 +277,6 @@
         linear-gradient(180deg, var(--key-a2), var(--key-b2));
     }
 
-    /* A：更亮的陶瓷/高光层（顶部高光更明显） */
     tbody td::before{
       content:"";
       position:absolute;
@@ -284,7 +290,6 @@
       mix-blend-mode: screen;
     }
 
-    /* B：金属键帽“拉丝纹理” + 更清晰描边（很轻微，不花哨） */
     tbody td::after{
       content:"";
       position:absolute;
@@ -306,7 +311,6 @@
       opacity: .55;
     }
 
-    /* hover：让键帽“更亮一点”，凸显存在感（无动画） */
     tbody tr:hover td{
       background:
         radial-gradient(180px 120px at 18% 14%, rgba(255,255,255,.18), transparent 62%),
@@ -314,7 +318,6 @@
       border-color: rgba(205,225,255,.22);
     }
 
-    /* 结论上色 */
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
@@ -565,7 +568,6 @@
     return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
   }
 
-  // 徽章按钮：文案改为“下载视频zip”，并调整左右颜色
   function shieldDownloadBadge(resolution){
     const label = "YouTube";
     const message = resolution ? `下载视频zip 🎞️ ${resolution}` : `下载视频zip`;
@@ -573,12 +575,8 @@
     const url = new URL("https://img.shields.io/static/v1");
     url.searchParams.set("label", label);
     url.searchParams.set("message", message);
-
-    // 右侧颜色（message 区）改为主题蓝
     url.searchParams.set("color", "3f60ff");
-    // 左侧颜色（label 区）改为 YouTube 红（解决“左灰右红”）
     url.searchParams.set("labelColor", "FF0000");
-
     url.searchParams.set("style", "plastic");
     url.searchParams.set("logo", "youtube");
     url.searchParams.set("logoColor", "white");
@@ -703,7 +701,7 @@
   }
 
   function shouldShowArtifact(name){
-    const showMeta = $("showMeta").checked;
+    const showMeta = document.getElementById("showMeta").checked;
     if (name.startsWith("meta-")) return showMeta;
     return true;
   }
@@ -711,9 +709,8 @@
   function renderArtifacts(runId, requestId, artifactsJson, meta, thumbUrlFallback){
     const artsAll = artifactsJson.artifacts || [];
     const arts = artsAll.filter(a => shouldShowArtifact(a.name));
-
     if(!arts.length){
-      $("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
+      document.getElementById("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
       return;
     }
 
@@ -769,26 +766,26 @@
     }
 
     html += "</tbody></table></div>";
-    $("artifacts").innerHTML = html;
+    document.getElementById("artifacts").innerHTML = html;
   }
 
-  let lastArtifacts = null, lastRunId = null, lastReqId = null, lastMeta = null, lastThumbFallback = null;
-  $("showMeta").addEventListener("change", () => {
+  let lastArtifacts=null, lastRunId=null, lastReqId=null, lastMeta=null, lastThumbFallback=null;
+  document.getElementById("showMeta").addEventListener("change", () => {
     if(lastArtifacts && lastRunId && lastReqId){
       renderArtifacts(lastRunId, lastReqId, lastArtifacts, lastMeta, lastThumbFallback);
     }
   });
 
-  $("f").addEventListener("submit", async (e) => {
+  document.getElementById("f").addEventListener("submit", async (e) => {
     e.preventDefault();
-    $("btn").disabled = true;
+    document.getElementById("btn").disabled = true;
 
-    $("result").textContent = "(等待查询完成...)";
-    $("steps").innerHTML = "";
-    $("runMeta").textContent = "";
-    $("artifacts").innerHTML = "";
-    $("artNote").textContent = "（运行完成后自动加载）";
-    $("status").textContent = "正在触发工作流...";
+    document.getElementById("result").textContent = "(等待查询完成...)";
+    document.getElementById("steps").innerHTML = "";
+    document.getElementById("runMeta").textContent = "";
+    document.getElementById("artifacts").innerHTML = "";
+    document.getElementById("artNote").textContent = "（运行完成后自动加载）";
+    document.getElementById("status").textContent = "正在触发工作流...";
     renderVideoMeta(null);
 
     const fd = new FormData(e.target);
@@ -806,7 +803,7 @@
 
     if(inputs.action_type === "下载" && !inputs.video_format){
       alert("下载模式需要填写 视频格式代码");
-      $("btn").disabled = false;
+      document.getElementById("btn").disabled = false;
       return;
     }
 
@@ -814,7 +811,7 @@
     const thumbFallback = ytThumbFromId(vid);
 
     await postJSON("/dispatch", { ref: "main", inputs });
-    $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
+    document.getElementById("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
 
     let run = null;
     for(let i=0;i<45;i++){
@@ -823,14 +820,14 @@
       await sleep(1000);
     }
     if(!run){
-      $("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
-      $("btn").disabled = false;
+      document.getElementById("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
+      document.getElementById("btn").disabled = false;
       return;
     }
 
     const runId = run.id;
-    $("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
-    $("status").textContent = "运行中...";
+    document.getElementById("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
+    document.getElementById("status").textContent = "运行中...";
 
     let runInfo = null;
     while(true){
@@ -839,14 +836,14 @@
       renderSteps(jobs);
 
       const st = `${runInfo.status}${runInfo.conclusion ? " / " + runInfo.conclusion : ""}`;
-      $("status").textContent = `状态：${st}`;
+      document.getElementById("status").textContent = `状态：${st}`;
 
       if(runInfo.status === "completed") break;
       await sleep(2000);
     }
 
     try {
-      $("artNote").textContent = "正在加载 artifacts...";
+      document.getElementById("artNote").textContent = "正在加载 artifacts...";
       const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
       const meta = await tryLoadMeta(runId, request_id, arts);
 
@@ -859,26 +856,26 @@
       lastThumbFallback = thumbFallback;
 
       renderArtifacts(runId, request_id, arts, meta, thumbFallback);
-      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
+      document.getElementById("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
         + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
     } catch (err) {
-      $("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
+      document.getElementById("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
     }
 
     if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
       const artName = `query-result-${request_id}`;
-      $("status").textContent = "查询已完成，正在获取 formats.txt ...";
+      document.getElementById("status").textContent = "查询已完成，正在获取 formats.txt ...";
       try{
         const txt = await downloadZipAndExtractText(runId, artName, "formats.txt");
-        $("result").textContent = txt;
+        document.getElementById("result").textContent = txt;
       }catch(e){
-        $("result").textContent = "下载查询结果 artifact 失败：" + String(e);
+        document.getElementById("result").textContent = "下载查询结果 artifact 失败：" + String(e);
       }
     } else {
-      $("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
+      document.getElementById("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
     }
 
-    $("btn").disabled = false;
+    document.getElementById("btn").disabled = false;
   });
 </script>
 </body>
