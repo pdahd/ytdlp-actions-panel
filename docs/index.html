@@ -38,24 +38,21 @@
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* ===== 表格“浮雕”主题（实心背景） ===== */
-      --tbl-frame: #0b1124;
-      --tbl-frame2: #101a35;
+      /* ===== 表格“金属框 + 豆腐块”主题 ===== */
+      --metal-a: #4a556f;
+      --metal-b: #1a2136;
+      --metal-c: #0c1224;
 
-      --tbl-surface: #0e1733;     /* 单元块底色 */
-      --tbl-surface2: #0c142d;    /* 交替行 */
-      --tbl-surface3: #0a1227;    /* hover */
+      --tbl-bed-a: #0f1836; /* 桌面底 */
+      --tbl-bed-b: #0a1127;
 
-      --tbl-line: rgba(255,255,255,.14);
-      --tbl-line-strong: rgba(255,255,255,.18);
+      --cell-a: #16214a;    /* 豆腐块底色 */
+      --cell-b: #0f1838;
+      --cell-a2:#141e44;    /* 交替行 */
+      --cell-b2:#0d1733;
 
-      /* 立体阴影：外凸 + 内凹 */
-      --tbl-shadow-outer:
-        0 14px 28px rgba(0,0,0,.45),
-        0 2px 0 rgba(255,255,255,.06);
-      --tbl-shadow-inner:
-        inset 0 1px 0 rgba(255,255,255,.08),
-        inset 0 -10px 24px rgba(0,0,0,.35);
+      --cell-border: rgba(255,255,255,.14);
+      --cell-border2: rgba(0,0,0,.55);
     }
 
     body{
@@ -171,76 +168,120 @@
       overflow:auto;
     }
 
-    /* ===== 浮雕表格框体（不透明、厚度、层次） ===== */
+    /* ======= 表格：金属薄外框 + 内部豆腐块 ======= */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
 
-      /* “框体厚度”：外层 frame */
-      padding: 7px;
+      /* 外框变薄 */
+      padding: 3px;
       border-radius: 16px;
 
-      background: linear-gradient(180deg, var(--tbl-frame2), var(--tbl-frame));
+      /* 金属凹凸：多层渐变 */
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 30%) ,
+        linear-gradient(135deg, var(--metal-a) 0%, var(--metal-b) 38%, var(--metal-c) 100%);
       border: 1px solid rgba(255,255,255,.16);
 
-      box-shadow: var(--tbl-shadow-outer);
+      /* 金属凹凸阴影 */
+      box-shadow:
+        0 12px 22px rgba(0,0,0,.40),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -1px 0 rgba(0,0,0,.55);
+      position: relative;
+    }
+
+    /* 金属边缘高光细线（更精致、不会显厚） */
+    .table-wrap::before{
+      content:"";
+      position:absolute;
+      left: 6px;
+      right: 6px;
+      top: 4px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+      pointer-events:none;
+      opacity: .8;
     }
 
     table{
       width:100%;
-      border-collapse: separate;
-      border-spacing: 0;
       min-width: 720px;
 
-      /* 内层“台面” */
-      background: linear-gradient(180deg, #0d1631, #0b1227);
-      border-radius: 12px;
+      border-collapse: separate;
+      /* 关键：用间距做“豆腐块分隔”，不靠粗线框 */
+      border-spacing: 7px;
+
+      border-radius: 13px;
       overflow: hidden;
 
-      box-shadow: var(--tbl-shadow-inner);
+      /* 桌面底色（实心） */
+      background: linear-gradient(180deg, var(--tbl-bed-a), var(--tbl-bed-b));
+
+      /* 内凹 */
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -12px 24px rgba(0,0,0,.45);
     }
 
     th, td{
       padding: 10px 10px;
       font-size: 13px;
       vertical-align: top;
-
-      /* 更粗分隔线 */
-      border-bottom: 2px solid var(--tbl-line);
+      border-radius: 12px;
     }
 
-    /* 纵向列分隔线，形成单元块 */
-    th:not(:last-child), td:not(:last-child){
-      border-right: 2px solid var(--tbl-line);
+    /* 表头：保持原来的色系，但做成“凸起块” */
+    th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.38),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -10px 18px rgba(0,0,0,.35);
     }
 
-    /* 表头配色保持你之前的风格：只换成实心不透明基底叠加 */
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(95,124,255,.55), rgba(18,26,55,1));
-      border-bottom: 2px solid var(--tbl-line-strong);
+      background: linear-gradient(180deg, rgba(95,124,255,.75), rgba(25,33,64,1));
     }
 
     .thead-arts th{
-      background: linear-gradient(180deg, rgba(165,110,255,.50), rgba(18,26,55,1));
-      border-bottom: 2px solid var(--tbl-line-strong);
+      background: linear-gradient(180deg, rgba(165,110,255,.72), rgba(25,33,64,1));
     }
 
-    /* 表格 body：实心块状底色（交替行） */
+    /* 豆腐块：每个 td 都是独立立体块 */
     tbody td{
-      background: linear-gradient(180deg, var(--tbl-surface), #0b132a);
+      background:
+        radial-gradient(120px 90px at 18% 18%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--cell-a), var(--cell-b));
+      border: 1px solid var(--cell-border);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.42),               /* 外凸 */
+        inset 0 1px 0 rgba(255,255,255,.14),       /* 上高光 */
+        inset 0 -12px 18px rgba(0,0,0,.38);        /* 下阴影 */
     }
+
     tbody tr:nth-child(even) td{
-      background: linear-gradient(180deg, var(--tbl-surface2), #0a1126);
+      background:
+        radial-gradient(120px 90px at 18% 18%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--cell-a2), var(--cell-b2));
     }
+
     tbody tr:hover td{
-      background: linear-gradient(180deg, var(--tbl-surface3), #091024);
+      background:
+        radial-gradient(140px 100px at 18% 18%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(180deg, #1a285a, #0e1734);
+      border-color: rgba(190,210,255,.18);
     }
 
     /* 结论上色 */
-    .c-success{ color: var(--ok); font-weight: 700; }
-    .c-failure{ color: var(--bad); font-weight: 800; }
-    .c-cancelled{ color: var(--warn); font-weight: 800; }
-    .c-skipped{ color: var(--skip); font-weight: 700; }
+    .c-success{ color: var(--ok); font-weight: 800; }
+    .c-failure{ color: var(--bad); font-weight: 900; }
+    .c-cancelled{ color: var(--warn); font-weight: 900; }
+    .c-skipped{ color: var(--skip); font-weight: 800; }
 
     .pill{
       display:inline-block;
@@ -268,10 +309,9 @@
       height: 28px;
       max-width: 100%;
       vertical-align: middle;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,.45));
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.48));
     }
 
-    /* 非视频工件：立体下载按钮 */
     .dl-btn{
       display: inline-flex;
       align-items: center;
@@ -279,20 +319,18 @@
       padding: 8px 12px;
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,.18);
-      background: linear-gradient(180deg, #2a355f, #1a2244);
+      background:
+        radial-gradient(120px 80px at 20% 20%, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(180deg, #2a355f, #1a2244);
       color: rgba(238,242,255,.95);
       text-decoration: none;
       box-shadow:
         0 10px 18px rgba(0,0,0,.40),
-        inset 0 1px 0 rgba(255,255,255,.10);
+        inset 0 1px 0 rgba(255,255,255,.12),
+        inset 0 -12px 18px rgba(0,0,0,.35);
       white-space: nowrap;
     }
-    .dl-btn:active{
-      transform: translateY(1px);
-      box-shadow:
-        0 7px 14px rgba(0,0,0,.45),
-        inset 0 1px 0 rgba(255,255,255,.10);
-    }
+    .dl-btn:active{ transform: translateY(1px); }
 
     .toggle{
       display: inline-flex;
@@ -315,7 +353,7 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
     .video-meta .title{
-      font-weight: 800;
+      font-weight: 900;
       line-height: 1.25;
       margin-bottom: 4px;
     }
@@ -336,7 +374,7 @@
     }
 
     .name-main{
-      font-weight: 800;
+      font-weight: 900;
       line-height: 1.25;
       max-width: 520px;
     }
@@ -350,6 +388,8 @@
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
       .grid{ grid-template-columns: 1fr; }
+      table{ min-width: 680px; border-spacing: 6px; }
+      .table-wrap{ padding: 3px; }
     }
     @media (max-width: 520px){
       .time-grid{ grid-template-columns: 1fr; }
@@ -359,10 +399,12 @@
         gap: var(--gap);
       }
       .time-grid .time-pair > *{ min-width:0; }
+      table{ border-spacing: 5px; }
     }
     @media (max-width: 380px){
       .time-grid .time-pair{ grid-template-columns: 1fr; }
       .name-main{ max-width: 280px; }
+      table{ border-spacing: 4px; }
     }
   </style>
 </head>
@@ -642,7 +684,6 @@
     for(const a of arts){
       const name = a.name;
       const size = a.size_in_bytes;
-
       const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
 
       const badges = [];
@@ -650,7 +691,6 @@
       if(name === downloadName) badges.push(`<span class="pill">download</span>`);
       if(name.startsWith("meta-")) badges.push(`<span class="pill">meta</span>`);
 
-      // Name 列：下载视频那行显示“视频标题”，并保留 artifact 原名
       let nameCell = `<div class="name-main">${esc(name)}</div>`;
       if(name === downloadName && meta?.title){
         nameCell = `
@@ -669,13 +709,11 @@
         `;
       }
 
-      // 下载列：视频用 YouTube 徽章；其它用立体按钮
       let downloadHtml = `<a class="dl-btn" href="${proxyZip}">⬇ 下载zip</a>`;
       if(name === downloadName){
         const res = meta?.selected?.resolution || null;
-        const badgeUrl = shieldDownloadBadge(res);
         downloadHtml = `<a href="${proxyZip}">
-          <img class="badge-img" src="${badgeUrl}" alt="download badge">
+          <img class="badge-img" src="${shieldDownloadBadge(res)}" alt="download badge">
         </a>`;
       }
 
@@ -691,7 +729,6 @@
     $("artifacts").innerHTML = html;
   }
 
-  // toggle meta：重绘 artifacts
   let lastArtifacts = null, lastRunId = null, lastReqId = null, lastMeta = null, lastThumbFallback = null;
   $("showMeta").addEventListener("change", () => {
     if(lastArtifacts && lastRunId && lastReqId){
@@ -765,12 +802,10 @@
       await sleep(2000);
     }
 
-    let arts = null;
-    let meta = null;
     try {
       $("artNote").textContent = "正在加载 artifacts...";
-      arts = await fetchJSON(`/artifacts?run_id=${runId}`);
-      meta = await tryLoadMeta(runId, request_id, arts);
+      const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
+      const meta = await tryLoadMeta(runId, request_id, arts);
 
       renderVideoMeta(meta);
 
