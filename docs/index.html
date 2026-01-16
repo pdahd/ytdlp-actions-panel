@@ -9,7 +9,6 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      /* 更亮的暗色背景 + 冷色金属风 */
       --bg0: #0a1224;
       --bg1: #101b33;
       --bg2: #0a0f1d;
@@ -17,10 +16,6 @@
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
-      /* 金属/玻璃面板 */
-      --card: rgba(255,255,255,.075);
-      --card2: rgba(255,255,255,.045);
-      --border: rgba(255,255,255,.16);
       --border2: rgba(255,255,255,.22);
 
       --input-bg: rgba(10,14,25,.55);
@@ -36,14 +31,20 @@
       --radius: 18px;
       --radius2: 12px;
       --gap: 12px;
+
+      --gridline: rgba(255,255,255,.14);
+      --gridline-strong: rgba(255,255,255,.18);
+
+      --ok: #3ddc84;
+      --bad: #ff5c7a;
+      --warn: #ffd166;
+      --skip: rgba(238,242,255,.55);
     }
 
     body{
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
       color: var(--text);
-
-      /* 多层渐变：更亮、有层次 */
       background:
         radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
         radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
@@ -53,12 +54,16 @@
     }
 
     .wrap{ max-width: 980px; margin: 22px auto; padding: 0 16px; }
-
     a{ color: var(--link); }
+    .muted{ font-size: 13px; color: var(--muted); }
 
-    .muted{ opacity: .9; font-size: 13px; color: var(--muted); }
+    hr{
+      border: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      margin: 14px 0;
+    }
 
-    /* 金属卡片：渐变边框 + 高光 + 内阴影 */
     .card{
       position: relative;
       border-radius: var(--radius);
@@ -69,9 +74,10 @@
       box-shadow: var(--shadow);
       padding: 18px;
       overflow: hidden;
-    }
 
-    /* 顶部镀铬高光条 */
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
+    }
     .card::before{
       content:"";
       position:absolute;
@@ -87,27 +93,9 @@
         transparent 100%);
       transform: rotate(-2deg);
       pointer-events:none;
-      filter: blur(.2px);
     }
 
-    /* 玻璃模糊（可选，兼容则生效，不兼容则忽略） */
-    .card{
-      backdrop-filter: blur(10px) saturate(140%);
-      -webkit-backdrop-filter: blur(10px) saturate(140%);
-    }
-
-    hr{
-      border: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
-      margin: 14px 0;
-    }
-
-    .grid{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-    }
+    .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
     .grid > * { min-width: 0; }
     .full{ grid-column: 1 / -1; min-width: 0; }
 
@@ -122,12 +110,10 @@
       background: var(--input-bg);
       color: var(--text);
       outline: none;
-
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.10),
         inset 0 -10px 25px rgba(0,0,0,.22);
     }
-
     input:focus, select:focus{
       border-color: rgba(160,190,255,.55);
       box-shadow:
@@ -146,7 +132,6 @@
     .time-grid > * { min-width: 0; }
 
     .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
-
     button{
       padding: 10px 14px;
       border-radius: var(--radius2);
@@ -169,17 +154,39 @@
       overflow:auto;
     }
 
+    /* 表格 */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
       border-radius: var(--radius2);
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.16);
       background: rgba(0,0,0,.18);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
 
-    table{ width:100%; border-collapse: collapse; min-width: 720px; }
-    td, th{ border-bottom: 1px solid rgba(255,255,255,.10); padding: 8px; font-size: 13px; vertical-align: top; }
+    table{ width:100%; border-collapse: separate; border-spacing: 0; min-width: 720px; }
+    th, td{
+      padding: 10px 10px;
+      font-size: 13px;
+      vertical-align: top;
+      border-bottom: 2px solid var(--gridline);
+    }
+    th{
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      text-align: left;
+      border-bottom: 2px solid var(--gridline-strong);
+    }
+    th:not(:last-child), td:not(:last-child){ border-right: 2px solid var(--gridline); }
+
+    .thead-runs th{ background: linear-gradient(180deg, rgba(95,124,255,.35), rgba(95,124,255,.08)); }
+    .thead-arts th{ background: linear-gradient(180deg, rgba(165,110,255,.30), rgba(165,110,255,.08)); }
+
+    .c-success{ color: var(--ok); font-weight: 600; }
+    .c-failure{ color: var(--bad); font-weight: 700; }
+    .c-cancelled{ color: var(--warn); font-weight: 700; }
+    .c-skipped{ color: var(--skip); font-weight: 600; }
 
     .pill{
       display:inline-block;
@@ -210,6 +217,61 @@
       filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
     }
 
+    .toggle{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      user-select: none;
+    }
+    .toggle input{ width: 16px; height: 16px; }
+
+    /* 新增：视频信息条 */
+    .video-meta{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .video-meta .title{
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+    .video-meta .line{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .chip{
+      display:inline-block;
+      padding:2px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      font-size: 12px;
+      color: rgba(238,242,255,.86);
+    }
+
+    /* Artifacts Name：用标题展示时的样式 */
+    .name-main{
+      font-weight: 700;
+      line-height: 1.25;
+      max-width: 520px;
+    }
+    .name-sub{
+      margin-top: 4px;
+      font-size: 12px;
+      color: rgba(238,242,255,.70);
+      word-break: break-all;
+    }
+
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
       .grid{ grid-template-columns: 1fr; }
@@ -225,6 +287,7 @@
     }
     @media (max-width: 380px){
       .time-grid .time-pair{ grid-template-columns: 1fr; }
+      .name-main{ max-width: 280px; }
     }
   </style>
 </head>
@@ -292,10 +355,20 @@
         <div class="muted" id="runMeta"></div>
       </div>
 
-      <div id="steps"></div>
+      <!-- 新增：标题 + 时长 + 频道 -->
+      <div id="videoMeta" class="video-meta" style="display:none;"></div>
 
-      <h3 style="margin-top:16px;">Artifacts（构建工件）</h3>
-      <div class="muted" id="artNote">（运行完成后自动加载）</div>
+      <div id="steps" style="margin-top:12px;"></div>
+
+      <div class="row" style="margin-top:14px; justify-content: space-between;">
+        <h3 style="margin:0;">Artifacts（构建工件）</h3>
+        <label class="toggle">
+          <input id="showMeta" type="checkbox">
+          <span class="muted">显示 meta 工件</span>
+        </label>
+      </div>
+
+      <div class="muted" id="artNote" style="margin-top:6px;">（运行完成后自动加载）</div>
       <div id="artifacts"></div>
 
       <h3 style="margin-top:16px;">查询结果（formats.txt）</h3>
@@ -353,16 +426,66 @@
     return url.toString();
   }
 
+  function clsForConclusion(conc){
+    const v = String(conc || "").toLowerCase();
+    if (v === "success") return "c-success";
+    if (v === "failure") return "c-failure";
+    if (v === "cancelled") return "c-cancelled";
+    if (v === "skipped") return "c-skipped";
+    return "";
+  }
+
+  function formatDuration(sec){
+    if (sec == null) return null;
+    const s = Math.max(0, Math.floor(Number(sec)));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const r = s % 60;
+    const mm = String(m).padStart(2,"0");
+    const rr = String(r).padStart(2,"0");
+    return h > 0 ? `${h}:${mm}:${rr}` : `${m}:${rr.padStart(2,"0")}`;
+  }
+
+  function renderVideoMeta(meta){
+    const box = $("videoMeta");
+    if(!meta){
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const title = meta.title || "(无标题)";
+    const dur = formatDuration(meta.duration);
+    const channel = meta.channel || meta.uploader || "";
+    const res = meta?.selected?.resolution || "";
+    const fmt = meta.requested_format || "";
+
+    box.innerHTML = `
+      <div class="title">${esc(title)}</div>
+      <div class="line">
+        ${dur ? `<span class="chip">⏱ ${esc(dur)}</span>` : ``}
+        ${channel ? `<span class="chip">📺 ${esc(channel)}</span>` : ``}
+        ${res ? `<span class="chip">🎞️ ${esc(res)}</span>` : ``}
+        ${fmt ? `<span class="chip">fmt=${esc(fmt)}</span>` : ``}
+      </div>
+    `;
+    box.style.display = "block";
+  }
+
   function renderSteps(jobsJson){
     const jobs = jobsJson.jobs || [];
-    let html = `<div class="table-wrap"><table><thead><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
+    let html = `<div class="table-wrap"><table>
+      <thead class="thead-runs"><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
+
     for(const job of jobs){
       for(const s of (job.steps || [])){
+        const conc = s.conclusion || "";
+        const cls = clsForConclusion(conc);
         html += `<tr>
           <td>${esc(job.name || "")}</td>
           <td>${esc(s.name || "")}</td>
           <td>${esc(s.status || "")}</td>
-          <td>${esc(s.conclusion || "")}</td>
+          <td class="${cls}">${esc(conc)}</td>
         </tr>`;
       }
     }
@@ -420,20 +543,27 @@
     return JSON.parse(txt);
   }
 
+  function shouldShowArtifact(name){
+    const showMeta = $("showMeta").checked;
+    if (name.startsWith("meta-")) return showMeta;
+    return true;
+  }
+
   function renderArtifacts(runId, requestId, artifactsJson, meta, thumbUrlFallback){
-    const arts = artifactsJson.artifacts || [];
+    const artsAll = artifactsJson.artifacts || [];
+    const arts = artsAll.filter(a => shouldShowArtifact(a.name));
+
     if(!arts.length){
-      $("artifacts").innerHTML = "<div class='muted'>（该 run 没有 artifacts）</div>";
+      $("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
       return;
     }
 
     const queryName = `query-result-${requestId}`;
     const downloadName = `downloaded-videos-${requestId}`;
-
     const thumbUrl = meta?.thumbnail || thumbUrlFallback || "";
 
     let html = `<div class="table-wrap"><table>
-      <thead><tr><th>预览</th><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>`;
+      <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>操作</th></tr></thead><tbody>`;
 
     for(const a of arts){
       const name = a.name;
@@ -445,7 +575,28 @@
       const badges = [];
       if(name === queryName) badges.push(`<span class="pill">query</span>`);
       if(name === downloadName) badges.push(`<span class="pill">download</span>`);
+      if(name.startsWith("meta-")) badges.push(`<span class="pill">meta</span>`);
 
+      // Name 列：下载视频那行显示“视频标题”，并保留 artifact 原名做小字
+      let nameCell = `<div class="name-main">${esc(name)}</div>`;
+      if(name === downloadName && meta?.title){
+        nameCell = `
+          <div class="name-main">${esc(meta.title)}</div>
+          <div class="name-sub">${esc(name)}</div>
+        `;
+      } else if (name.startsWith("meta-")) {
+        nameCell = `
+          <div class="name-main">meta.json</div>
+          <div class="name-sub">${esc(name)}</div>
+        `;
+      } else if (name === queryName) {
+        nameCell = `
+          <div class="name-main">formats.txt</div>
+          <div class="name-sub">${esc(name)}</div>
+        `;
+      }
+
+      // “下载zip（经Worker）”按钮：对 downloaded-videos 用 YouTube 徽章（含真实分辨率）
       let workerDownloadHtml = `<a href="${proxyZip}">下载zip（经Worker）</a>`;
       if(name === downloadName){
         const res = meta?.selected?.resolution || null;
@@ -457,7 +608,7 @@
 
       html += `<tr>
         <td>${thumbUrl ? `<img class="thumb" src="${esc(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</td>
-        <td>${esc(name)} ${badges.join(" ")}</td>
+        <td>${nameCell} ${badges.join(" ")}</td>
         <td>${esc(humanBytes(size))}</td>
         <td>
           ${workerDownloadHtml}
@@ -471,6 +622,14 @@
     $("artifacts").innerHTML = html;
   }
 
+  // toggle meta：重绘 artifacts
+  let lastArtifacts = null, lastRunId = null, lastReqId = null, lastMeta = null, lastThumbFallback = null;
+  $("showMeta").addEventListener("change", () => {
+    if(lastArtifacts && lastRunId && lastReqId){
+      renderArtifacts(lastRunId, lastReqId, lastArtifacts, lastMeta, lastThumbFallback);
+    }
+  });
+
   $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("btn").disabled = true;
@@ -481,6 +640,7 @@
     $("artifacts").innerHTML = "";
     $("artNote").textContent = "（运行完成后自动加载）";
     $("status").textContent = "正在触发工作流...";
+    renderVideoMeta(null);
 
     const fd = new FormData(e.target);
     const request_id = uuid();
@@ -542,6 +702,15 @@
       $("artNote").textContent = "正在加载 artifacts...";
       arts = await fetchJSON(`/artifacts?run_id=${runId}`);
       meta = await tryLoadMeta(runId, request_id, arts);
+
+      renderVideoMeta(meta);
+
+      lastArtifacts = arts;
+      lastRunId = runId;
+      lastReqId = request_id;
+      lastMeta = meta;
+      lastThumbFallback = thumbFallback;
+
       renderArtifacts(runId, request_id, arts, meta, thumbFallback);
       $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
         + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
