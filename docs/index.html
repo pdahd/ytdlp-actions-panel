@@ -9,12 +9,12 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      /* ===== 页面浅灰背景（统一从顶到底） ===== */
+      /* ===== 网页大背景：浅灰（保持） ===== */
       --page-bg-a: #f2f3f5;
       --page-bg-b: #e3e5ea;
       --page-bg-c: #d6d8de;
 
-      /* ===== 面板内部（保持深色体系，不改控件颜色） ===== */
+      /* ===== 面板内部颜色体系（不动） ===== */
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
@@ -40,12 +40,12 @@
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* 金属外框（表格外框） */
+      /* 表格外框金属 */
       --metal-a: #5a6684;
       --metal-b: #1b233a;
       --metal-c: #0b1225;
 
-      /* 键帽底色（表格单元格） */
+      /* 键帽单元格 */
       --key-a:  #2a3f86;
       --key-b:  #15214d;
       --key-a2: #28407f;
@@ -58,13 +58,13 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* 通道底色：纸黄色 */
+      /* 表格通道：纸黄色（保持） */
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
     }
 
-    /* ===== 修复顶部断层 + 回弹露底：html/body 同背景 ===== */
+    /* ===== 解决顶部断层/回弹露底：html/body 同背景 ===== */
     html{
       height: 100%;
       background: linear-gradient(180deg, var(--page-bg-a) 0%, var(--page-bg-b) 45%, var(--page-bg-c) 100%);
@@ -93,106 +93,44 @@
       margin: 14px 0;
     }
 
-    /* ===== 科幻镀铬金属面板（强质感，不至于太暗） ===== */
+    /* ===== 面板：回滚到“深色玻璃金属（不五彩）” ===== */
     .card{
       position: relative;
       border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)) padding-box,
+        linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.08), rgba(255,255,255,.22)) border-box;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
       padding: 18px;
       overflow: hidden;
-      isolation: isolate; /* 限制混合模式只在卡片内部生效 */
 
-      /* 用 background-clip 做“铬合金边框” */
-      border: 1px solid transparent;
-      background:
-        /* --- padding-box：主体金属底 --- */
-        radial-gradient(900px 420px at 20% -15%, rgba(140, 230, 255, .30), transparent 62%),
-        radial-gradient(760px 360px at 110% 30%, rgba(255, 150, 230, .16), transparent 55%),
-        radial-gradient(560px 320px at 50% 120%, rgba(120, 255, 220, .10), transparent 60%),
-
-        /* 铬面“反射条纹” */
-        linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 42%),
-        linear-gradient(180deg, #3e5287 0%, #24345f 45%, #171f3e 100%)
-        padding-box,
-
-        /* --- border-box：镀铬边框（带冷光偏色） --- */
-        conic-gradient(
-          from 210deg,
-          rgba(255,255,255,.50),
-          rgba(120,220,255,.35),
-          rgba(255,255,255,.22),
-          rgba(180,140,255,.28),
-          rgba(255,255,255,.48)
-        )
-        border-box;
-
-      box-shadow:
-        0 26px 70px rgba(0,0,0,.38),
-        0 10px 26px rgba(0,0,0,.28),
-        inset 0 1px 0 rgba(255,255,255,.22),
-        inset 0 -26px 70px rgba(0,0,0,.40);
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
-
-    /* 顶部“能量导轨”高光（更科幻） */
     .card::before{
       content:"";
       position:absolute;
-      left: -12%;
-      right: -12%;
-      top: -30px;
-      height: 92px;
+      left: -10%;
+      right: -10%;
+      top: -28px;
+      height: 74px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,.16) 20%,
+        rgba(255,255,255,.06) 45%,
+        rgba(255,255,255,.14) 70%,
+        transparent 100%);
       transform: rotate(-2deg);
       pointer-events:none;
-
-      background:
-        linear-gradient(90deg,
-          transparent 0%,
-          rgba(255,255,255,.28) 14%,
-          rgba(120,230,255,.14) 34%,
-          rgba(255,255,255,.10) 50%,
-          rgba(255,160,240,.14) 68%,
-          rgba(255,255,255,.26) 86%,
-          transparent 100%);
-      filter: blur(.2px);
-      opacity: .95;
     }
 
-    /* 拉丝/扫描线/微噪点（强质感但不过分） */
-    .card::after{
-      content:"";
-      position:absolute;
-      inset: 0;
-      pointer-events:none;
-
-      background:
-        /* 微弱扫描线 */
-        repeating-linear-gradient(
-          180deg,
-          rgba(255,255,255,.030) 0px,
-          rgba(255,255,255,.030) 1px,
-          rgba(255,255,255,0) 7px,
-          rgba(255,255,255,0) 12px
-        ),
-        /* 斜向拉丝纹理 */
-        repeating-linear-gradient(
-          135deg,
-          rgba(255,255,255,.020) 0px,
-          rgba(255,255,255,.020) 1px,
-          rgba(255,255,255,0) 6px,
-          rgba(255,255,255,0) 10px
-        );
-
-      opacity: .45;
-      mix-blend-mode: overlay;
-    }
-
-    /* ===== 表单布局 ===== */
     .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
     .grid > * { min-width: 0; }
     .full{ grid-column: 1 / -1; min-width: 0; }
 
     label{ display:block; font-size: 13px; opacity: .95; margin-bottom: 6px; }
 
-    /* 不改输入框颜色 */
     input, select{
       width: 100%;
       max-width: 100%;
@@ -224,8 +162,6 @@
     .time-grid > * { min-width: 0; }
 
     .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
-
-    /* 不改按钮颜色 */
     button{
       padding: 10px 14px;
       border-radius: var(--radius2);
@@ -237,7 +173,6 @@
     }
     button:disabled{ opacity: .6; cursor:not-allowed; }
 
-    /* 不改输出框颜色 */
     pre{
       white-space: pre-wrap;
       word-break: break-word;
@@ -249,7 +184,7 @@
       overflow:auto;
     }
 
-    /* ======= 表格容器（金属薄外框）不改 ======= */
+    /* 表格外框金属 */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -299,7 +234,6 @@
       vertical-align: top;
       border-radius: var(--key-radius);
     }
-
     th{
       position: sticky;
       top: 0;
@@ -312,12 +246,12 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：古铜色渐变 */
+    /* 运行信息表头：古铜 */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(205,140,70,.92), rgba(65,40,20,1));
     }
 
-    /* Artifacts 表头：紫色渐变 */
+    /* Artifacts 表头：紫色 */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
@@ -338,10 +272,8 @@
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a2), var(--key-b2));
     }
-
     tbody td::before,
     tbody td::after{ z-index: 0; }
-
     tbody td::before{
       content:"";
       position:absolute;
@@ -374,15 +306,7 @@
         0 0 0 1px rgba(255,255,255,.08);
       opacity: .55;
     }
-
     .cell-inner{ position: relative; z-index: 2; }
-
-    tbody tr:hover td{
-      background:
-        radial-gradient(180px 120px at 18% 14%, rgba(255,255,255,.18), transparent 62%),
-        linear-gradient(180deg, #3350a3, #172353);
-      border-color: rgba(205,225,255,.22);
-    }
 
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
