@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- VERSION: PANEL_UI_v1.1_darkBG_topFix -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -9,12 +10,19 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      /* ===== 回滚：深蓝统一背景（避免顶部断层） ===== */
+      /* ===== 深蓝大背景（本次修复的核心：html/body 都用同一套） ===== */
       --bg0: #0a1224;
       --bg1: #101b33;
       --bg2: #0a0f1d;
 
-      /* ===== 面板内颜色（保持你现在的体系） ===== */
+      /* 把背景组合写成变量，确保 html/body 完全一致 */
+      --app-bg:
+        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+
+      /* ===== 面板内部颜色体系（保持不变） ===== */
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
@@ -58,35 +66,30 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* 表格通道：纸黄色（保留你喜欢的） */
+      /* 表格通道：纸黄色（保持） */
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
     }
 
-    /* ===== 关键：html/body 同一套背景，避免顶部“黑边断层”和回弹露底 ===== */
+    /* ===== 本次修复点：html + body 完全一致的背景（消除顶部断层） ===== */
     html{
       height: 100%;
+      min-height: 100%;
       background-color: var(--bg0);
-      background:
-        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
-        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-image: var(--app-bg);
       background-attachment: fixed;
+      background-repeat: no-repeat;
     }
     body{
       margin: 0;
       min-height: 100vh;
       background-color: var(--bg0);
-      background:
-        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
-        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-image: var(--app-bg);
       background-attachment: fixed;
+      background-repeat: no-repeat;
 
-      /* 保留：避免橡皮筋回弹露底 */
+      /* 防止回弹露底（如果你想保留回弹效果，可把这行删掉） */
       overscroll-behavior-y: none;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
@@ -104,7 +107,7 @@
       margin: 14px 0;
     }
 
-    /* ===== 回滚：你之前那种“深色玻璃金属面板”（不五彩） ===== */
+    /* 面板（保持不变：深色玻璃金属） */
     .card{
       position: relative;
       border-radius: var(--radius);
@@ -196,7 +199,7 @@
       overflow:auto;
     }
 
-    /* ===== 表格外框金属 ===== */
+    /* 表格外框金属 */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -259,12 +262,12 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：古铜色渐变 */
+    /* 运行信息表头：绿色渐变（基线版） */
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(205,140,70,.92), rgba(65,40,20,1));
+      background: linear-gradient(180deg, rgba(90,220,140,.88), rgba(10,58,32,1));
     }
 
-    /* Artifacts 表头：紫色渐变 */
+    /* Artifacts 表头：紫色渐变（基线版） */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
