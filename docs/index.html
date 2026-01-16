@@ -9,12 +9,12 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      /* ===== 网页大背景：浅灰（保持） ===== */
-      --page-bg-a: #f2f3f5;
-      --page-bg-b: #e3e5ea;
-      --page-bg-c: #d6d8de;
+      /* ===== 回滚：深蓝统一背景（避免顶部断层） ===== */
+      --bg0: #0a1224;
+      --bg1: #101b33;
+      --bg2: #0a0f1d;
 
-      /* ===== 面板内部颜色体系（不动） ===== */
+      /* ===== 面板内颜色（保持你现在的体系） ===== */
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
@@ -58,24 +58,35 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* 表格通道：纸黄色（保持） */
+      /* 表格通道：纸黄色（保留你喜欢的） */
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
     }
 
-    /* ===== 解决顶部断层/回弹露底：html/body 同背景 ===== */
+    /* ===== 关键：html/body 同一套背景，避免顶部“黑边断层”和回弹露底 ===== */
     html{
       height: 100%;
-      background: linear-gradient(180deg, var(--page-bg-a) 0%, var(--page-bg-b) 45%, var(--page-bg-c) 100%);
-      background-color: var(--page-bg-a);
+      background-color: var(--bg0);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-attachment: fixed;
     }
     body{
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(180deg, var(--page-bg-a) 0%, var(--page-bg-b) 45%, var(--page-bg-c) 100%);
-      background-color: var(--page-bg-a);
+      background-color: var(--bg0);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-attachment: fixed;
 
+      /* 保留：避免橡皮筋回弹露底 */
       overscroll-behavior-y: none;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
@@ -93,7 +104,7 @@
       margin: 14px 0;
     }
 
-    /* ===== 面板：回滚到“深色玻璃金属（不五彩）” ===== */
+    /* ===== 回滚：你之前那种“深色玻璃金属面板”（不五彩） ===== */
     .card{
       position: relative;
       border-radius: var(--radius);
@@ -162,6 +173,7 @@
     .time-grid > * { min-width: 0; }
 
     .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
+
     button{
       padding: 10px 14px;
       border-radius: var(--radius2);
@@ -184,7 +196,7 @@
       overflow:auto;
     }
 
-    /* 表格外框金属 */
+    /* ===== 表格外框金属 ===== */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -212,7 +224,7 @@
       opacity: .85;
     }
 
-    /* 表格通道：纸黄色 */
+    /* 表格通道（纸黄色） */
     table.tbl{
       width:100%;
       min-width: 720px;
@@ -234,6 +246,7 @@
       vertical-align: top;
       border-radius: var(--key-radius);
     }
+
     th{
       position: sticky;
       top: 0;
@@ -246,12 +259,12 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：古铜 */
+    /* 运行信息表头：古铜色渐变 */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(205,140,70,.92), rgba(65,40,20,1));
     }
 
-    /* Artifacts 表头：紫色 */
+    /* Artifacts 表头：紫色渐变 */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
