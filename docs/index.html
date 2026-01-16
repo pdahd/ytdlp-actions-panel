@@ -9,10 +9,12 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      --bg0: #0a1224;
-      --bg1: #101b33;
-      --bg2: #0a0f1d;
+      /* ===== 页面浅灰背景（统一从顶到底） ===== */
+      --page-bg-a: #f2f3f5;
+      --page-bg-b: #e3e5ea;
+      --page-bg-c: #d6d8de;
 
+      /* ===== 面板内部（保持你之前的深色风格） ===== */
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
@@ -56,29 +58,29 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* ===== 通道底色：纸黄色（你要求替换古铜色） ===== */
+      /* 通道底色：纸黄色 */
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
     }
 
-    /* 回弹露白修复 */
-    html{ height: 100%; background-color: var(--bg0); }
-
+    /* ===== 修复顶部背景断层 + 回弹露底：html/body 同背景 ===== */
+    html{
+      height: 100%;
+      background: linear-gradient(180deg, var(--page-bg-a) 0%, var(--page-bg-b) 45%, var(--page-bg-c) 100%);
+      background-color: var(--page-bg-a);
+    }
     body{
       margin: 0;
       min-height: 100vh;
-      background-color: var(--bg0);
+      background: linear-gradient(180deg, var(--page-bg-a) 0%, var(--page-bg-b) 45%, var(--page-bg-c) 100%);
+      background-color: var(--page-bg-a);
+
+      /* 你之前用于避免露白的策略：保留 */
       overscroll-behavior-y: none;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
       color: var(--text);
-      background:
-        radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
-        radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
-      background-attachment: fixed;
     }
 
     .wrap{ max-width: 980px; margin: 22px auto; padding: 0 16px; }
@@ -92,19 +94,17 @@
       margin: 14px 0;
     }
 
+    /* ===== 深色实体面板：悬浮在浅灰背景上（更稳定，不会顶部断层） ===== */
     .card{
       position: relative;
       border-radius: var(--radius);
       background:
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)) padding-box,
-        linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.08), rgba(255,255,255,.22)) border-box;
+        linear-gradient(180deg, rgba(18,26,55,.94), rgba(10,16,34,.94)) padding-box,
+        linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08), rgba(255,255,255,.18)) border-box;
       border: 1px solid transparent;
-      box-shadow: var(--shadow);
+      box-shadow: 0 22px 55px rgba(0,0,0,.45);
       padding: 18px;
       overflow: hidden;
-
-      backdrop-filter: blur(10px) saturate(140%);
-      -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
     .card::before{
       content:"";
@@ -210,7 +210,7 @@
       opacity: .85;
     }
 
-    /* table background = “通道/槽宽/十字路口”底色（纸黄色） */
+    /* 表格通道（纸黄色） */
     table.tbl{
       width:100%;
       min-width: 720px;
@@ -245,17 +245,17 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：绿色渐变（保留） */
+    /* ✅ 运行信息表头：古铜色渐变 */
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(90,220,140,.88), rgba(10,58,32,1));
+      background: linear-gradient(180deg, rgba(205,140,70,.92), rgba(65,40,20,1));
     }
 
-    /* Artifacts 表头：恢复紫色渐变（你要求） */
+    /* Artifacts 表头：紫色渐变 */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
 
-    /* 键帽单元格（保持） */
+    /* 键帽单元格 */
     tbody td{
       position: relative;
       isolation: isolate;
@@ -317,7 +317,6 @@
       border-color: rgba(205,225,255,.22);
     }
 
-    /* Conclusion 仅文字上色（恢复无动画逻辑） */
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
