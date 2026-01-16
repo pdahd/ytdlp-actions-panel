@@ -38,7 +38,7 @@
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* ===== 表格：金属框 + 键帽单元格 ===== */
+      /* 金属外框 */
       --metal-a: #5a6684;
       --metal-b: #1b233a;
       --metal-c: #0b1225;
@@ -56,21 +56,17 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* ===== 通道底色（你要改的“十字路口/槽宽”） ===== */
-      /* runs 表格通道：橙色铜槽 */
+      /* 通道底色（铜橙槽） */
       --bed-runs-a: #a85616;
       --bed-runs-b: #3a1c08;
 
-      /* artifacts 表格通道：同逻辑，稍深一点的铜橙 */
       --bed-arts-a: #7e3f12;
       --bed-arts-b: #2a1206;
     }
 
     /* 回弹露白修复 */
-    html{
-      height: 100%;
-      background-color: var(--bg0);
-    }
+    html{ height: 100%; background-color: var(--bg0); }
+
     body{
       margin: 0;
       min-height: 100vh;
@@ -188,7 +184,7 @@
       overflow:auto;
     }
 
-    /* ======= 表格容器（金属薄外框） ======= */
+    /* ======= 金属薄外框 ======= */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -216,7 +212,7 @@
       opacity: .85;
     }
 
-    /* 关键：table 的 background 就是你说的“通道/槽宽/十字路口”底色 */
+    /* table 的 background 就是“十字路口/槽宽通道” */
     table.tbl{
       width:100%;
       min-width: 720px;
@@ -228,15 +224,11 @@
         inset 0 1px 0 rgba(255,255,255,.12),
         inset 0 -16px 28px rgba(0,0,0,.45);
     }
-
-    /* ✅ runs 表格通道底色：橙色 */
     table.tbl.runs{
       background:
         radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.10), transparent 55%),
         linear-gradient(180deg, var(--bed-runs-a), var(--bed-runs-b));
     }
-
-    /* ✅ artifacts 表格通道底色：同逻辑橙色系（更深一点） */
     table.tbl.arts{
       background:
         radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,.08), transparent 55%),
@@ -253,7 +245,7 @@
     th{
       position: sticky;
       top: 0;
-      z-index: 2;
+      z-index: 3;
       text-align: left;
       border: 1px solid rgba(255,255,255,.16);
       box-shadow:
@@ -262,18 +254,21 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* runs 表头棕色（你已确认需要） */
+    /* ✅ 运行信息表头：绿色渐变 */
     .thead-runs th{
-      background: linear-gradient(180deg, rgba(205,140,70,.88), rgba(65,40,20,1));
-    }
-    /* arts 表头紫色 */
-    .thead-arts th{
-      background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
+      background: linear-gradient(180deg, rgba(90,220,140,.88), rgba(10,58,32,1));
     }
 
-    /* ===== 键帽单元格（保持不变） ===== */
+    /* ✅ Artifacts 表头：酒红色渐变 */
+    .thead-arts th{
+      background: linear-gradient(180deg, rgba(170,55,75,.90), rgba(55,12,22,1));
+    }
+
+    /* ===== 键帽单元格：关键修复（让内容在伪元素之上） ===== */
     tbody td{
       position: relative;
+      isolation: isolate; /* 防止 mix-blend-mode 影响外层 */
+
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a), var(--key-b));
@@ -285,6 +280,12 @@
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a2), var(--key-b2));
+    }
+
+    /* 伪元素放到底层 */
+    tbody td::before,
+    tbody td::after{
+      z-index: 0;
     }
 
     tbody td::before{
@@ -320,6 +321,12 @@
       opacity: .55;
     }
 
+    /* 单元格内容层：必须盖过伪元素（动画才可见） */
+    .cell-inner{
+      position: relative;
+      z-index: 2;
+    }
+
     tbody tr:hover td{
       background:
         radial-gradient(180px 120px at 18% 14%, rgba(255,255,255,.18), transparent 62%),
@@ -327,33 +334,32 @@
       border-color: rgba(205,225,255,.22);
     }
 
-    /* 结论上色 */
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
     .c-running{ color: rgba(238,242,255,.70); font-weight: 900; }
 
-    /* ===== Conclusion 处理中动画（酷炫流光条） ===== */
+    /* Conclusion 处理中动画：流光条（确保可见） */
     .procbar{
       position: relative;
+      z-index: 3;
       height: 12px;
       border-radius: 999px;
       overflow: hidden;
-      width: min(180px, 100%);
-      margin-top: 2px;
+      width: min(190px, 100%);
       background:
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.25)),
-        linear-gradient(90deg, rgba(255,180,80,.25), rgba(80,140,255,.25));
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.30)),
+        linear-gradient(90deg, rgba(255,180,80,.30), rgba(80,140,255,.30));
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.16),
-        inset 0 -1px 0 rgba(0,0,0,.60),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -1px 0 rgba(0,0,0,.70),
         0 10px 16px rgba(0,0,0,.35);
     }
     .procbar::before{
       content:"";
       position:absolute;
-      inset: -20% -40%;
+      inset: -30% -40%;
       background:
         repeating-linear-gradient(
           60deg,
@@ -362,31 +368,28 @@
           rgba(255,255,255,.18) 12px,
           rgba(255,255,255,.00) 18px
         );
-      animation: procStripes 1.0s linear infinite;
-      opacity: .9;
+      animation: procStripes 0.9s linear infinite;
+      opacity: .95;
     }
     .procbar::after{
       content:"";
       position:absolute;
       inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.50), transparent);
-      transform: translateX(-120%);
-      animation: procScan 1.2s ease-in-out infinite;
-      opacity: .7;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.60), transparent);
+      transform: translateX(-140%);
+      animation: procScan 1.1s ease-in-out infinite;
+      opacity: .75;
       mix-blend-mode: screen;
     }
     @keyframes procStripes{
       from { transform: translateX(0); }
-      to   { transform: translateX(48px); }
+      to   { transform: translateX(54px); }
     }
     @keyframes procScan{
-      0%   { transform: translateX(-120%); }
-      50%  { transform: translateX(120%); }
-      100% { transform: translateX(120%); }
+      0%   { transform: translateX(-140%); }
+      55%  { transform: translateX(140%); }
+      100% { transform: translateX(140%); }
     }
-
-    /* 让动画条不被键帽伪元素压住 */
-    .procbar{ z-index: 3; }
 
     .pill{
       display:inline-block;
@@ -408,6 +411,8 @@
       background: rgba(0,0,0,.25);
       display:block;
       box-shadow: 0 12px 22px rgba(0,0,0,.55);
+      position: relative;
+      z-index: 2;
     }
 
     .badge-img{
@@ -703,20 +708,21 @@
         const status = s.status || "";
         const conc = s.conclusion || "";
 
-        let concHtml = esc(conc);
+        let concInner = `<div class="cell-inner">${esc(conc)}</div>`;
         let cls = clsForConclusion(conc);
 
-        // ✅ 非 completed 就显示动画（queued / in_progress）
-        if (status && status !== "completed") {
+        // 如果在跑（queued / in_progress），或 completed 但 conclusion 还没填（极短窗口），显示动画
+        const isProcessing = (status && status !== "completed") || (status === "completed" && !conc);
+        if (isProcessing) {
           cls = "c-running";
-          concHtml = `<span class="procbar" title="${esc(status)}"></span>`;
+          concInner = `<div class="cell-inner"><span class="procbar" title="${esc(status || "running")}"></span></div>`;
         }
 
         html += `<tr>
-          <td>${esc(job.name || "")}</td>
-          <td>${esc(s.name || "")}</td>
-          <td>${esc(status)}</td>
-          <td class="${cls}">${concHtml}</td>
+          <td><div class="cell-inner">${esc(job.name || "")}</div></td>
+          <td><div class="cell-inner">${esc(s.name || "")}</div></td>
+          <td><div class="cell-inner">${esc(status)}</div></td>
+          <td class="${cls}">${concInner}</td>
         </tr>`;
       }
     }
@@ -806,36 +812,39 @@
       if(name === downloadName) badges.push(`<span class="pill">download</span>`);
       if(name.startsWith("meta-")) badges.push(`<span class="pill">meta</span>`);
 
-      let nameCell = `<div class="name-main">${esc(name)}</div>`;
+      let nameCell = `<div class="cell-inner"><div class="name-main">${esc(name)}</div></div>`;
       if(name === downloadName && meta?.title){
         nameCell = `
-          <div class="name-main">${esc(meta.title)}</div>
-          <div class="name-sub">${esc(name)}</div>
-        `;
+          <div class="cell-inner">
+            <div class="name-main">${esc(meta.title)}</div>
+            <div class="name-sub">${esc(name)}</div>
+          </div>`;
       } else if (name.startsWith("meta-")) {
         nameCell = `
-          <div class="name-main">meta.json</div>
-          <div class="name-sub">${esc(name)}</div>
-        `;
+          <div class="cell-inner">
+            <div class="name-main">meta.json</div>
+            <div class="name-sub">${esc(name)}</div>
+          </div>`;
       } else if (name === queryName) {
         nameCell = `
-          <div class="name-main">formats.txt</div>
-          <div class="name-sub">${esc(name)}</div>
-        `;
+          <div class="cell-inner">
+            <div class="name-main">formats.txt</div>
+            <div class="name-sub">${esc(name)}</div>
+          </div>`;
       }
 
-      let downloadHtml = `<a class="dl-btn" href="${proxyZip}">⬇ 下载zip</a>`;
+      let downloadHtml = `<div class="cell-inner"><a class="dl-btn" href="${proxyZip}">⬇ 下载zip</a></div>`;
       if(name === downloadName){
         const res = meta?.selected?.resolution || null;
-        downloadHtml = `<a href="${proxyZip}">
+        downloadHtml = `<div class="cell-inner"><a href="${proxyZip}">
           <img class="badge-img" src="${shieldDownloadBadge(res)}" alt="download badge">
-        </a>`;
+        </a></div>`;
       }
 
       html += `<tr>
-        <td>${thumbUrl ? `<img class="thumb" src="${esc(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</td>
+        <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${esc(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
         <td>${nameCell} ${badges.join(" ")}</td>
-        <td>${esc(humanBytes(size))}</td>
+        <td><div class="cell-inner">${esc(humanBytes(size))}</div></td>
         <td>${downloadHtml}</td>
       </tr>`;
     }
