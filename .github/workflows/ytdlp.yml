@@ -1,4 +1,4 @@
-# VERSION: WORKFLOW_v1.6_cachePip_cacheFFmpeg_keepDeno
+# VERSION: WORKFLOW_v1.6.1_cachePipFix_cacheFFmpeg_keepDeno
 name: 2026油管视频下载
 
 run-name: yt-dlp-${{ inputs.action_type }}-${{ inputs.request_id }}
@@ -44,14 +44,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ====== Python + pip cache（加速 pip install / yt-dlp[default]） ======
+      # ====== Python + pip cache（修复：指定 cache-dependency-path，避免找不到 requirements/pyproject 报错） ======
       - name: Setup Python (enable pip cache)
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           cache: 'pip'
+          cache-dependency-path: .github/workflows/ytdlp.yml
 
-      # ====== 保留 Deno（你要求必须保留） ======
+      # ====== 保留 Deno（EJS runtime） ======
       - name: Setup Deno (EJS runtime)
         uses: denoland/setup-deno@v2
         with:
@@ -119,7 +120,6 @@ jobs:
           title = info.get("title")
           webpage_url = info.get("webpage_url") or video_link
 
-          # 2A：封面直接走 i.ytimg.com
           thumb = None
           if vid:
             thumb = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
@@ -189,7 +189,7 @@ jobs:
           name: meta-${{ github.event.inputs.request_id }}
           path: out/meta.json
 
-      # ====== 下载模式：FFmpeg（加缓存，命中则跳过下载解压） ======
+      # ====== 下载模式：FFmpeg（加缓存） ======
       - name: Cache FFmpeg (BtbN)
         if: ${{ github.event.inputs.action_type == '下载' }}
         id: cache-ffmpeg
