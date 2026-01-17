@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v1.3_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime -->
+<!-- VERSION: PANEL_UI_v1.4_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime_conclusionPlaceholder -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -248,7 +248,7 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：砖红（保持你目前的选择） */
+    /* 运行信息表头：砖红 */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
@@ -312,6 +312,9 @@
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
+
+    /* 新增：占位符样式（本次唯一新增样式） */
+    .c-pending{ color: rgba(238,242,255,.60); font-weight: 800; }
 
     .pill{
       display:inline-block;
@@ -543,20 +546,12 @@
     }[c]));
   }
 
-  // ===== 本地系统时间：YYYYMMDD-HHMMSS =====
   function localTimestamp(){
     const d = new Date();
     const p2 = (n) => String(n).padStart(2, "0");
-    const y = d.getFullYear();
-    const mo = p2(d.getMonth()+1);
-    const da = p2(d.getDate());
-    const hh = p2(d.getHours());
-    const mm = p2(d.getMinutes());
-    const ss = p2(d.getSeconds());
-    return `${y}${mo}${da}-${hh}${mm}${ss}`;
+    return `${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
   }
 
-  // 点击时生成 dlname（手机本地时间），并改写 href
   function buildArtifactZipUrl(runId, artName, dlPrefix){
     const ts = localTimestamp();
     const dlname = `${dlPrefix}-${ts}.zip`;
@@ -567,7 +562,6 @@
     return u.toString();
   }
 
-  // 事件代理：任何带 data-dl="1" 的链接，点击时写入带 dlname 的 href
   document.addEventListener("click", (e) => {
     const a = e.target.closest("a[data-dl='1']");
     if (!a) return;
@@ -575,10 +569,8 @@
     const runId = a.dataset.runid;
     const artName = a.dataset.artname;
     const prefix = a.dataset.prefix || "Artifact";
-
     if (!runId || !artName) return;
 
-    // 用户点击瞬间设置最终下载地址（确保“系统时间”是点击时刻）
     a.href = buildArtifactZipUrl(runId, artName, prefix);
   }, { capture: true });
 
@@ -618,84 +610,6 @@
     return url.toString();
   }
 
-  function clsForConclusion(conc){
-    const v = String(conc || "").toLowerCase();
-    if (v === "success") return "c-success";
-    if (v === "failure") return "c-failure";
-    if (v === "cancelled") return "c-cancelled";
-    if (v === "skipped") return "c-skipped";
-    return "";
-  }
-
-  function formatDuration(sec){
-    if (sec == null) return null;
-    const s = Math.max(0, Math.floor(Number(sec)));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const r = s % 60;
-    const mm = String(m).padStart(2,"0");
-    const rr = String(r).padStart(2,"0");
-    return h > 0 ? `${h}:${mm}:${rr}` : `${m}:${String(r).padStart(2,"0")}`;
-  }
-
-  function renderVideoMeta(meta){
-    const box = $("videoMeta");
-    if(!meta){
-      box.style.display = "none";
-      box.innerHTML = "";
-      return;
-    }
-
-    const title = meta.title || "(无标题)";
-    const dur = formatDuration(meta.duration);
-    const channel = meta.channel || meta.uploader || "";
-    const res = meta?.selected?.resolution || "";
-    const fmt = meta.requested_format || "";
-
-    box.innerHTML = `
-      <div class="title">${esc(title)}</div>
-      <div class="line">
-        ${dur ? `<span class="chip">⏱ ${esc(dur)}</span>` : ``}
-        ${channel ? `<span class="chip">📺 ${esc(channel)}</span>` : ``}
-        ${res ? `<span class="chip">🎞️ ${esc(res)}</span>` : ``}
-        ${fmt ? `<span class="chip">fmt=${esc(fmt)}</span>` : ``}
-      </div>
-    `;
-    box.style.display = "block";
-  }
-
-  function renderSteps(jobsJson){
-    const jobs = jobsJson.jobs || [];
-    let html = `<div class="table-wrap"><table class="tbl">
-      <thead class="thead-runs"><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
-
-    for(const job of jobs){
-      for(const s of (job.steps || [])){
-        const status = s.status || "";
-        const conc = s.conclusion || "";
-        const cls = clsForConclusion(conc);
-
-        html += `<tr>
-          <td><div class="cell-inner">${esc(job.name || "")}</div></td>
-          <td><div class="cell-inner">${esc(s.name || "")}</div></td>
-          <td><div class="cell-inner">${esc(status)}</div></td>
-          <td class="${cls}"><div class="cell-inner">${esc(conc)}</div></td>
-        </tr>`;
-      }
-    }
-
-    html += "</tbody></table></div>";
-    $("steps").innerHTML = html;
-  }
-
-  function humanBytes(n){
-    if (n == null) return "";
-    const units = ["B","KB","MB","GB"];
-    let i = 0, x = Number(n);
-    while (x >= 1024 && i < units.length-1){ x/=1024; i++; }
-    return `${x.toFixed(i===0?0:2)} ${units[i]}`;
-  }
-
   async function fetchJSON(path){
     const r = await fetch(WORKER_BASE + path, { credentials: "include" });
     const t = await r.text();
@@ -715,8 +629,58 @@
     return JSON.parse(t);
   }
 
+  function clsForConclusion(conc){
+    const v = String(conc || "").toLowerCase();
+    if (v === "success") return "c-success";
+    if (v === "failure") return "c-failure";
+    if (v === "cancelled") return "c-cancelled";
+    if (v === "skipped") return "c-skipped";
+    return "";
+  }
+
+  function renderSteps(jobsJson){
+    const jobs = jobsJson.jobs || [];
+    let html = `<div class="table-wrap"><table class="tbl">
+      <thead class="thead-runs"><tr><th>Job</th><th>Step</th><th>Status</th><th>Conclusion</th></tr></thead><tbody>`;
+
+    for(const job of jobs){
+      for(const s of (job.steps || [])){
+        const status = s.status || "";
+        const rawConc = s.conclusion;
+
+        // === 本次改动：conclusion 为空时显示占位符 ===
+        let concText;
+        let cls;
+        if (rawConc === null || rawConc === undefined || rawConc === "") {
+          concText = (status && status !== "completed") ? "…" : "—";
+          cls = "c-pending";
+        } else {
+          concText = rawConc;
+          cls = clsForConclusion(concText);
+        }
+
+        html += `<tr>
+          <td><div class="cell-inner">${esc(job.name || "")}</div></td>
+          <td><div class="cell-inner">${esc(s.name || "")}</div></td>
+          <td><div class="cell-inner">${esc(status)}</div></td>
+          <td class="${cls}"><div class="cell-inner">${esc(concText)}</div></td>
+        </tr>`;
+      }
+    }
+
+    html += "</tbody></table></div>";
+    $("steps").innerHTML = html;
+  }
+
+  function humanBytes(n){
+    if (n == null) return "";
+    const units = ["B","KB","MB","GB"];
+    let i = 0, x = Number(n);
+    while (x >= 1024 && i < units.length-1){ x/=1024; i++; }
+    return `${x.toFixed(i===0?0:2)} ${units[i]}`;
+  }
+
   async function downloadZipAndExtractText(runId, artifactName, targetSuffix){
-    // 这里仍用 Worker 的 artifact-zip，但不需要 dlname（只是读取内容）
     const u = new URL(WORKER_BASE + "/artifact-zip");
     u.searchParams.set("run_id", runId);
     u.searchParams.set("name", artifactName);
@@ -738,6 +702,40 @@
     if(!exists) return null;
     const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
     return JSON.parse(txt);
+  }
+
+  function renderVideoMeta(meta){
+    const box = $("videoMeta");
+    if(!meta){
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+
+    const title = meta.title || "(无标题)";
+    const dur = meta.duration == null ? null : (()=>{
+      const s = Math.max(0, Math.floor(Number(meta.duration)));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const r = s % 60;
+      const p2 = (n)=>String(n).padStart(2,"0");
+      return h>0 ? `${h}:${p2(m)}:${p2(r)}` : `${m}:${p2(r)}`;
+    })();
+
+    const channel = meta.channel || meta.uploader || "";
+    const res = meta?.selected?.resolution || "";
+    const fmt = meta.requested_format || "";
+
+    box.innerHTML = `
+      <div class="title">${esc(title)}</div>
+      <div class="line">
+        ${dur ? `<span class="chip">⏱ ${esc(dur)}</span>` : ``}
+        ${channel ? `<span class="chip">📺 ${esc(channel)}</span>` : ``}
+        ${res ? `<span class="chip">🎞️ ${esc(res)}</span>` : ``}
+        ${fmt ? `<span class="chip">fmt=${esc(fmt)}</span>` : ``}
+      </div>
+    `;
+    box.style.display = "block";
   }
 
   function shouldShowArtifact(name){
@@ -791,11 +789,8 @@
           </div>`;
       }
 
-      // 下载链接：不把 dlname 固定写死在 href（因为要点击时刻的系统时间）
-      // 这里给一个“基础 href”，点击事件会把 href 改成带 dlname 的最终地址
       const baseHref = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
 
-      // prefix：用于生成文件名
       let prefix = "Artifact";
       if (name === downloadName) prefix = "YouTube";
       else if (name === queryName) prefix = "Formats";
@@ -830,13 +825,7 @@
     $("artifacts").innerHTML = html;
   }
 
-  let lastArtifacts=null, lastRunId=null, lastReqId=null, lastMeta=null, lastThumbFallback=null;
-  $("showMeta").addEventListener("change", () => {
-    if(lastArtifacts && lastRunId && lastReqId){
-      renderArtifacts(lastRunId, lastReqId, lastArtifacts, lastMeta, lastThumbFallback);
-    }
-  });
-
+  // 主流程
   $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("btn").disabled = true;
@@ -909,14 +898,8 @@
       const meta = await tryLoadMeta(runId, request_id, arts);
 
       renderVideoMeta(meta);
-
-      lastArtifacts = arts;
-      lastRunId = runId;
-      lastReqId = request_id;
-      lastMeta = meta;
-      lastThumbFallback = thumbFallback;
-
       renderArtifacts(runId, request_id, arts, meta, thumbFallback);
+
       $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
         + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
     } catch (err) {
