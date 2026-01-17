@@ -1,4 +1,4 @@
-# VERSION: WORKFLOW_v1.6.1_cachePipFix_cacheFFmpeg_keepDeno
+# VERSION: WORKFLOW_v1.6.2_ffmpegPathFix_cachePipFix_cacheFFmpeg_keepDeno
 name: 2026油管视频下载
 
 run-name: yt-dlp-${{ inputs.action_type }}-${{ inputs.request_id }}
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ====== Python + pip cache（修复：指定 cache-dependency-path，避免找不到 requirements/pyproject 报错） ======
+      # ====== Python + pip cache（修复：指定 cache-dependency-path） ======
       - name: Setup Python (enable pip cache)
         uses: actions/setup-python@v5
         with:
@@ -78,7 +78,7 @@ jobs:
           name: query-result-${{ github.event.inputs.request_id }}
           path: out/formats.txt
 
-      # ====== 下载模式：生成 meta.json（真实分辨率/帧率/标题/时长/频道等） ======
+      # ====== 下载模式：生成 meta.json ======
       - name: Generate meta.json (selected format info)
         if: ${{ github.event.inputs.action_type == '下载' }}
         env:
@@ -204,12 +204,21 @@ jobs:
           mkdir -p ~/.local/ffmpeg-btbn
           wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-linux64-gpl.tar.xz
           tar -xf /tmp/ffmpeg.tar.xz -C ~/.local/ffmpeg-btbn --strip-components=1
+          ls -la ~/.local/ffmpeg-btbn/bin || true
 
+      # 关键修复：这一行只会影响“后续 steps”
       - name: Add FFmpeg to PATH
         if: ${{ github.event.inputs.action_type == '下载' }}
         run: |
           echo "$HOME/.local/ffmpeg-btbn/bin" >> $GITHUB_PATH
+
+      # 在下一步验证（此时 PATH 已更新）
+      - name: Verify FFmpeg
+        if: ${{ github.event.inputs.action_type == '下载' }}
+        run: |
+          which ffmpeg
           ffmpeg -version
+          which ffprobe
           ffprobe -version
 
       # ====== 下载模式：下载 + 上传 ======
