@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v1.1_darkBG_topFix -->
+<!-- VERSION: PANEL_UI_v1.3_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -10,19 +10,16 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     :root{
-      /* ===== 深蓝大背景（本次修复的核心：html/body 都用同一套） ===== */
       --bg0: #0a1224;
       --bg1: #101b33;
       --bg2: #0a0f1d;
 
-      /* 把背景组合写成变量，确保 html/body 完全一致 */
       --app-bg:
         radial-gradient(1200px 700px at 10% -10%, rgba(120,160,255,.28), transparent 60%),
         radial-gradient(900px 600px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
         radial-gradient(1000px 700px at 50% 110%, rgba(110,255,220,.10), transparent 55%),
         linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
 
-      /* ===== 面板内部颜色体系（保持不变） ===== */
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
@@ -42,18 +39,15 @@
       --radius2: 12px;
       --gap: 12px;
 
-      /* 状态颜色 */
       --ok: #3ddc84;
       --bad: #ff5c7a;
       --warn: #ffd166;
       --skip: rgba(238,242,255,.55);
 
-      /* 表格外框金属 */
       --metal-a: #5a6684;
       --metal-b: #1b233a;
       --metal-c: #0b1225;
 
-      /* 键帽单元格 */
       --key-a:  #2a3f86;
       --key-b:  #15214d;
       --key-a2: #28407f;
@@ -66,13 +60,11 @@
         inset 0 -16px 26px rgba(0,0,0,.52);
       --key-radius: 14px;
 
-      /* 表格通道：纸黄色（保持） */
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
     }
 
-    /* ===== 本次修复点：html + body 完全一致的背景（消除顶部断层） ===== */
     html{
       height: 100%;
       min-height: 100%;
@@ -88,8 +80,6 @@
       background-image: var(--app-bg);
       background-attachment: fixed;
       background-repeat: no-repeat;
-
-      /* 防止回弹露底（如果你想保留回弹效果，可把这行删掉） */
       overscroll-behavior-y: none;
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
@@ -107,7 +97,6 @@
       margin: 14px 0;
     }
 
-    /* 面板（保持不变：深色玻璃金属） */
     .card{
       position: relative;
       border-radius: var(--radius);
@@ -150,7 +139,7 @@
       max-width: 100%;
       padding: 10px 12px;
       border-radius: var(--radius2);
-      border: 1px solid var(--border2);
+      border: 1px solid rgba(255,255,255,.22);
       background: var(--input-bg);
       color: var(--text);
       outline: none;
@@ -176,11 +165,10 @@
     .time-grid > * { min-width: 0; }
 
     .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
-
     button{
       padding: 10px 14px;
       border-radius: var(--radius2);
-      border: 1px solid var(--btn-border);
+      border: 1px solid rgba(255,255,255,.22);
       background: var(--btn);
       color:#fff;
       cursor:pointer;
@@ -199,7 +187,6 @@
       overflow:auto;
     }
 
-    /* 表格外框金属 */
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -227,7 +214,6 @@
       opacity: .85;
     }
 
-    /* 表格通道（纸黄色） */
     table.tbl{
       width:100%;
       min-width: 720px;
@@ -262,17 +248,15 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：砖红色渐变（基线版） */
+    /* 运行信息表头：砖红（保持你目前的选择） */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
 
-    /* Artifacts 表头：紫色渐变（基线版） */
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
 
-    /* 键帽单元格 */
     tbody td{
       position: relative;
       isolation: isolate;
@@ -553,6 +537,50 @@
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[c]));
   }
+  function escAttr(s){
+    return String(s).replace(/["&<>]/g, c => ({
+      '"':"&quot;","&":"&amp;","<":"&lt;",">":"&gt;"
+    }[c]));
+  }
+
+  // ===== 本地系统时间：YYYYMMDD-HHMMSS =====
+  function localTimestamp(){
+    const d = new Date();
+    const p2 = (n) => String(n).padStart(2, "0");
+    const y = d.getFullYear();
+    const mo = p2(d.getMonth()+1);
+    const da = p2(d.getDate());
+    const hh = p2(d.getHours());
+    const mm = p2(d.getMinutes());
+    const ss = p2(d.getSeconds());
+    return `${y}${mo}${da}-${hh}${mm}${ss}`;
+  }
+
+  // 点击时生成 dlname（手机本地时间），并改写 href
+  function buildArtifactZipUrl(runId, artName, dlPrefix){
+    const ts = localTimestamp();
+    const dlname = `${dlPrefix}-${ts}.zip`;
+    const u = new URL(WORKER_BASE + "/artifact-zip");
+    u.searchParams.set("run_id", runId);
+    u.searchParams.set("name", artName);
+    u.searchParams.set("dlname", dlname);
+    return u.toString();
+  }
+
+  // 事件代理：任何带 data-dl="1" 的链接，点击时写入带 dlname 的 href
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-dl='1']");
+    if (!a) return;
+
+    const runId = a.dataset.runid;
+    const artName = a.dataset.artname;
+    const prefix = a.dataset.prefix || "Artifact";
+
+    if (!runId || !artName) return;
+
+    // 用户点击瞬间设置最终下载地址（确保“系统时间”是点击时刻）
+    a.href = buildArtifactZipUrl(runId, artName, prefix);
+  }, { capture: true });
 
   function parseYouTubeId(input){
     try{
@@ -607,7 +635,7 @@
     const r = s % 60;
     const mm = String(m).padStart(2,"0");
     const rr = String(r).padStart(2,"0");
-    return h > 0 ? `${h}:${mm}:${rr}` : `${m}:${rr.padStart(2,"0")}`;
+    return h > 0 ? `${h}:${mm}:${rr}` : `${m}:${String(r).padStart(2,"0")}`;
   }
 
   function renderVideoMeta(meta){
@@ -688,10 +716,12 @@
   }
 
   async function downloadZipAndExtractText(runId, artifactName, targetSuffix){
-    const zipResp = await fetch(
-      WORKER_BASE + `/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(artifactName)}`,
-      { credentials:"include" }
-    );
+    // 这里仍用 Worker 的 artifact-zip，但不需要 dlname（只是读取内容）
+    const u = new URL(WORKER_BASE + "/artifact-zip");
+    u.searchParams.set("run_id", runId);
+    u.searchParams.set("name", artifactName);
+
+    const zipResp = await fetch(u.toString(), { credentials:"include" });
     if(!zipResp.ok){
       throw new Error(await zipResp.text());
     }
@@ -734,7 +764,6 @@
     for(const a of arts){
       const name = a.name;
       const size = a.size_in_bytes;
-      const proxyZip = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
 
       const badges = [];
       if(name === queryName) badges.push(`<span class="pill">query</span>`);
@@ -762,16 +791,35 @@
           </div>`;
       }
 
-      let downloadHtml = `<div class="cell-inner"><a class="dl-btn" href="${proxyZip}">⬇ 下载zip</a></div>`;
+      // 下载链接：不把 dlname 固定写死在 href（因为要点击时刻的系统时间）
+      // 这里给一个“基础 href”，点击事件会把 href 改成带 dlname 的最终地址
+      const baseHref = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
+
+      // prefix：用于生成文件名
+      let prefix = "Artifact";
+      if (name === downloadName) prefix = "YouTube";
+      else if (name === queryName) prefix = "Formats";
+      else if (name.startsWith("meta-")) prefix = "Meta";
+
+      let downloadHtml = `
+        <div class="cell-inner">
+          <a class="dl-btn" data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="${escAttr(prefix)}"
+             href="${escAttr(baseHref)}">⬇ 下载zip</a>
+        </div>`;
+
       if(name === downloadName){
         const res = meta?.selected?.resolution || null;
-        downloadHtml = `<div class="cell-inner"><a href="${proxyZip}">
-          <img class="badge-img" src="${shieldDownloadBadge(res)}" alt="download badge">
-        </a></div>`;
+        downloadHtml = `
+          <div class="cell-inner">
+            <a data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="${escAttr(prefix)}"
+               href="${escAttr(baseHref)}">
+              <img class="badge-img" src="${escAttr(shieldDownloadBadge(res))}" alt="download badge">
+            </a>
+          </div>`;
       }
 
       html += `<tr>
-        <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${esc(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
+        <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${escAttr(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
         <td>${nameCell} ${badges.join(" ")}</td>
         <td><div class="cell-inner">${esc(humanBytes(size))}</div></td>
         <td>${downloadHtml}</td>
