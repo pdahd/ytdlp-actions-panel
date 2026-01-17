@@ -606,7 +606,7 @@
 
   function shieldDownloadBadge(resolution){
     const label = "YouTube";
-    const message = resolution ? `下载视频zip 🎞️ ${resolution}` : `下载视频zip`;
+    const message = resolution ? `下载zip ${resolution}` : `下载zip`;
     const url = new URL("https://img.shields.io/static/v1");
     url.searchParams.set("label", label);
     url.searchParams.set("message", message);
