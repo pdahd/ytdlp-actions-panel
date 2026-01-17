@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v1.4_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime_conclusionPlaceholder -->
+<!-- VERSION: PANEL_UI_v1.5_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime_conclusionPlaceholder_metaToggleFix_queryHideArtifacts -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -248,11 +248,9 @@
         inset 0 -14px 20px rgba(0,0,0,.45);
     }
 
-    /* 运行信息表头：砖红 */
     .thead-runs th{
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
-
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
@@ -313,7 +311,6 @@
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
 
-    /* 新增：占位符样式（本次唯一新增样式） */
     .c-pending{ color: rgba(238,242,255,.60); font-weight: 800; }
 
     .pill{
@@ -648,7 +645,6 @@
         const status = s.status || "";
         const rawConc = s.conclusion;
 
-        // === 本次改动：conclusion 为空时显示占位符 ===
         let concText;
         let cls;
         if (rawConc === null || rawConc === undefined || rawConc === "") {
@@ -744,9 +740,30 @@
     return true;
   }
 
+  // ===== 关键修复点：缓存上一次 artifacts + 支持 checkbox 触发重新渲染 =====
+  let lastRunId = null;
+  let lastRequestId = null;
+  let lastArtifactsJson = null;
+  let lastMetaObj = null;
+  let lastThumbFallback = null;
+
+  $("showMeta").addEventListener("change", () => {
+    if (lastArtifactsJson && lastRunId && lastRequestId) {
+      renderArtifacts(lastRunId, lastRequestId, lastArtifactsJson, lastMetaObj, lastThumbFallback);
+    }
+  });
+
   function renderArtifacts(runId, requestId, artifactsJson, meta, thumbUrlFallback){
+    // 缓存，确保 toggle 时可重绘
+    lastRunId = runId;
+    lastRequestId = requestId;
+    lastArtifactsJson = artifactsJson;
+    lastMetaObj = meta;
+    lastThumbFallback = thumbUrlFallback;
+
     const artsAll = artifactsJson.artifacts || [];
     const arts = artsAll.filter(a => shouldShowArtifact(a.name));
+
     if(!arts.length){
       $("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
       return;
@@ -825,10 +842,13 @@
     $("artifacts").innerHTML = html;
   }
 
-  // 主流程
   $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
     $("btn").disabled = true;
+
+    // 清空缓存（避免 toggle 显示旧 run 的 artifacts）
+    lastRunId = lastRequestId = null;
+    lastArtifactsJson = lastMetaObj = lastThumbFallback = null;
 
     $("result").textContent = "(等待查询完成...)";
     $("steps").innerHTML = "";
@@ -898,6 +918,8 @@
       const meta = await tryLoadMeta(runId, request_id, arts);
 
       renderVideoMeta(meta);
+
+      // 关键：每次加载 artifacts 后用 renderArtifacts（会缓存，以便 toggle 刷新）
       renderArtifacts(runId, request_id, arts, meta, thumbFallback);
 
       $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
