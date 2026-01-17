@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v1.5_darkBG_topFix_runsHeaderBrickRed_dlnameLocalTime_conclusionPlaceholder_metaToggleFix_queryHideArtifacts -->
+<!-- VERSION: PANEL_UI_v2.0_twoStageQuery_formatsJson_modeSelect_singlePick_lockDuringDownload_debugArtifactsToggle -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -23,13 +23,12 @@
       --text: #eef2ff;
       --muted: rgba(238,242,255,.80);
 
-      --border2: rgba(255,255,255,.22);
-
       --input-bg: rgba(10,14,25,.55);
       --pre-bg: rgba(8,10,18,.60);
 
       --link: #a9baff;
       --btn: linear-gradient(180deg, #5f7cff 0%, #3f60ff 100%);
+      --btn-ghost: rgba(255,255,255,.06);
       --btn-border: rgba(255,255,255,.22);
 
       --shadow: 0 18px 45px rgba(0,0,0,.45);
@@ -81,14 +80,14 @@
       background-attachment: fixed;
       background-repeat: no-repeat;
       overscroll-behavior-y: none;
-
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", Arial;
       color: var(--text);
     }
 
-    .wrap{ max-width: 980px; margin: 22px auto; padding: 0 16px; }
+    .wrap{ max-width: 1040px; margin: 22px auto; padding: 0 16px; }
     a{ color: var(--link); }
     .muted{ font-size: 13px; color: var(--muted); }
+    .hide{ display:none !important; }
 
     hr{
       border: 0;
@@ -128,10 +127,6 @@
       pointer-events:none;
     }
 
-    .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
-    .grid > * { min-width: 0; }
-    .full{ grid-column: 1 / -1; min-width: 0; }
-
     label{ display:block; font-size: 13px; opacity: .95; margin-bottom: 6px; }
 
     input, select{
@@ -154,17 +149,11 @@
         inset 0 1px 0 rgba(255,255,255,.10),
         inset 0 -10px 25px rgba(0,0,0,.22);
     }
-
-    .time-grid{
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: minmax(110px, 150px) 1fr 1fr;
-      gap: var(--gap);
-      align-items: end;
-    }
-    .time-grid > * { min-width: 0; }
+    input:disabled, select:disabled{ opacity:.55; cursor:not-allowed; }
 
     .row{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; min-width:0; }
+    .row-between{ display:flex; justify-content: space-between; align-items:center; gap: 10px; flex-wrap:wrap; }
+
     button{
       padding: 10px 14px;
       border-radius: var(--radius2);
@@ -175,6 +164,11 @@
       box-shadow: var(--shadow2);
     }
     button:disabled{ opacity: .6; cursor:not-allowed; }
+    .btn-ghost{
+      background: var(--btn-ghost);
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(238,242,255,.92);
+    }
 
     pre{
       white-space: pre-wrap;
@@ -202,21 +196,10 @@
         inset 0 -1px 0 rgba(0,0,0,.55);
       position: relative;
     }
-    .table-wrap::before{
-      content:"";
-      position:absolute;
-      left: 6px;
-      right: 6px;
-      top: 4px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.40), transparent);
-      pointer-events:none;
-      opacity: .85;
-    }
 
     table.tbl{
       width:100%;
-      min-width: 720px;
+      min-width: 760px;
       border-collapse: separate;
       border-spacing: 8px;
       border-radius: 13px;
@@ -251,6 +234,9 @@
     .thead-runs th{
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
+    .thead-formats th{
+      background: linear-gradient(180deg, rgba(60,120,255,.80), rgba(16,34,72,1));
+    }
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
@@ -261,8 +247,10 @@
       background:
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a), var(--key-b));
-      border: 1px solid var(--key-border);
-      box-shadow: var(--key-shadow-out), var(--key-shadow-in);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: var(--key-shadow-out),
+        inset 0 1px 0 rgba(255,255,255,.20),
+        inset 0 -16px 26px rgba(0,0,0,.52);
       overflow: hidden;
     }
     tbody tr:nth-child(even) td{
@@ -270,47 +258,12 @@
         radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, var(--key-a2), var(--key-b2));
     }
-    tbody td::before,
-    tbody td::after{ z-index: 0; }
-    tbody td::before{
-      content:"";
-      position:absolute;
-      inset: 0;
-      border-radius: var(--key-radius);
-      pointer-events:none;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.20), transparent 42%),
-        radial-gradient(260px 160px at 22% 0%, rgba(255,255,255,.22), transparent 62%);
-      opacity: .78;
-      mix-blend-mode: screen;
-    }
-    tbody td::after{
-      content:"";
-      position:absolute;
-      inset: 1px;
-      border-radius: calc(var(--key-radius) - 1px);
-      pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          135deg,
-          rgba(255,255,255,.05) 0px,
-          rgba(255,255,255,.05) 1px,
-          rgba(255,255,255,0) 5px,
-          rgba(255,255,255,0) 9px
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -1px 0 rgba(0,0,0,.78),
-        0 0 0 1px rgba(255,255,255,.08);
-      opacity: .55;
-    }
     .cell-inner{ position: relative; z-index: 2; }
 
     .c-success{ color: var(--ok); font-weight: 900; }
     .c-failure{ color: var(--bad); font-weight: 900; }
     .c-cancelled{ color: var(--warn); font-weight: 900; }
     .c-skipped{ color: var(--skip); font-weight: 900; }
-
     .c-pending{ color: rgba(238,242,255,.60); font-weight: 800; }
 
     .pill{
@@ -323,46 +276,6 @@
       margin-left:6px;
       background: rgba(255,255,255,.06);
     }
-
-    .thumb{
-      width: 96px;
-      height: 54px;
-      object-fit: cover;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.25);
-      display:block;
-      box-shadow: 0 12px 22px rgba(0,0,0,.55);
-      position: relative;
-      z-index: 2;
-    }
-
-    .badge-img{
-      height: 30px;
-      max-width: 100%;
-      vertical-align: middle;
-      filter: drop-shadow(0 14px 20px rgba(0,0,0,.55));
-    }
-
-    .dl-btn{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.18);
-      background:
-        radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.14), transparent 60%),
-        linear-gradient(180deg, #2a355f, #1a2244);
-      color: rgba(238,242,255,.95);
-      text-decoration: none;
-      box-shadow:
-        0 12px 18px rgba(0,0,0,.46),
-        inset 0 1px 0 rgba(255,255,255,.16),
-        inset 0 -14px 22px rgba(0,0,0,.45);
-      white-space: nowrap;
-    }
-    .dl-btn:active{ transform: translateY(1px); }
 
     .toggle{
       display: inline-flex;
@@ -405,22 +318,119 @@
       color: rgba(238,242,255,.86);
     }
 
-    .name-main{
-      font-weight: 900;
-      line-height: 1.25;
-      max-width: 520px;
-    }
-    .name-sub{
-      margin-top: 4px;
-      font-size: 12px;
-      color: rgba(238,242,255,.72);
-      word-break: break-all;
+    .thumb{
+      width: 96px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      display:block;
+      box-shadow: 0 12px 22px rgba(0,0,0,.55);
+      position: relative;
+      z-index: 2;
     }
 
+    .badge-img{
+      height: 30px;
+      max-width: 100%;
+      vertical-align: middle;
+      filter: drop-shadow(0 14px 20px rgba(0,0,0,.55));
+    }
+
+    .dl-btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(160px 110px at 18% 14%, rgba(255,255,255,.14), transparent 60%),
+        linear-gradient(180deg, #2a355f, #1a2244);
+      color: rgba(238,242,255,.95);
+      text-decoration: none;
+      box-shadow:
+        0 12px 18px rgba(0,0,0,.46),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -14px 22px rgba(0,0,0,.45);
+      white-space: nowrap;
+    }
+    .dl-btn:active{ transform: translateY(1px); }
+
+    /* 模式按钮组 */
+    .modebar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin: 10px 0 8px;
+    }
+    .modebtn{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+      color: rgba(238,242,255,.92);
+      cursor: pointer;
+      box-shadow: var(--shadow2);
+      user-select:none;
+    }
+    .modebtn.active{
+      background: var(--btn);
+      border-color: rgba(255,255,255,.28);
+      color: #fff;
+    }
+
+    /* 可选择行 */
+    .pick-row{ cursor: pointer; }
+    .pick-row td{ transition: transform .06s ease, filter .12s ease; }
+    .pick-row:active td{ transform: translateY(1px); }
+    .picked td{
+      outline: 2px solid rgba(120,160,255,.75);
+      outline-offset: -2px;
+      filter: brightness(1.06);
+    }
+
+    /* 置灰不可操作（下载中） */
+    .disabled-zone{
+      position: relative;
+      opacity: .60;
+      filter: grayscale(.10);
+      pointer-events: none;
+    }
+    .disabled-zone::after{
+      content: "下载任务运行中，格式列表已锁定";
+      position:absolute;
+      left: 10px; right: 10px; top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(238,242,255,.92);
+      font-weight: 800;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .subgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      align-items: start;
+    }
+
+    .time-grid{
+      display: grid;
+      grid-template-columns: minmax(110px, 150px) 1fr 1fr;
+      gap: var(--gap);
+      align-items: end;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px){
+      .subgrid{ grid-template-columns: 1fr; }
+    }
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
-      .grid{ grid-template-columns: 1fr; }
-      table.tbl{ min-width: 680px; border-spacing: 7px; }
+      table.tbl{ min-width: 720px; border-spacing: 7px; }
     }
     @media (max-width: 520px){
       .time-grid{ grid-template-columns: 1fr; }
@@ -429,12 +439,10 @@
         grid-template-columns: 1fr 1fr;
         gap: var(--gap);
       }
-      .time-grid .time-pair > *{ min-width:0; }
       table.tbl{ border-spacing: 6px; }
     }
     @media (max-width: 380px){
       .time-grid .time-pair{ grid-template-columns: 1fr; }
-      .name-main{ max-width: 280px; }
       table.tbl{ border-spacing: 5px; }
     }
   </style>
@@ -442,84 +450,137 @@
 
 <body>
   <div class="wrap">
+    <!-- 顶部：输入链接 + 解析按钮 -->
     <div class="card">
       <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
-      <div class="muted">网页表单 → Cloudflare Worker → workflow_dispatch → 轮询 run/jobs → 展示结果 + artifacts 下载</div>
-
+      <div class="muted">流程：粘贴链接 → 解析/查询格式 → 选择 → 提交下载 → 下载 artifact</div>
       <hr>
 
-      <form id="f">
-        <div class="grid">
-          <div>
-            <label>操作类型</label>
-            <select name="action_type">
-              <option>查询</option>
-              <option>下载</option>
-            </select>
-          </div>
-
-          <div>
-            <label>视频格式代码（下载用）</label>
-            <input name="video_format" placeholder="例如 251 / 137+140 / bestvideo+bestaudio 等">
-          </div>
-
-          <div class="full">
-            <label>YouTube 视频链接</label>
-            <input name="video_link" required placeholder="https://www.youtube.com/watch?v=...">
-          </div>
-
-          <div class="time-grid">
-            <div>
-              <label>启用指定时间段</label>
-              <select name="enable_sections">
-                <option>否</option>
-                <option>是</option>
-              </select>
-            </div>
-
-            <div class="time-pair" style="display: contents;">
-              <div>
-                <label>开始时间</label>
-                <input name="start_time" placeholder="mm:ss 或 hh:mm:ss">
-              </div>
-              <div>
-                <label>结束时间</label>
-                <input name="end_time" placeholder="mm:ss 或 hh:mm:ss">
-              </div>
-            </div>
-          </div>
+      <div class="row" style="align-items:flex-end;">
+        <div style="flex: 1 1 520px; min-width: 260px;">
+          <label>YouTube 视频链接</label>
+          <input id="videoLink" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
         </div>
-
-        <div class="row" style="margin-top:14px;">
-          <button id="btn" type="submit">提交并运行</button>
-          <span id="status" class="muted"></span>
+        <div class="row">
+          <button id="btnQuery" type="button">解析 / 查询</button>
+          <button id="btnReset" type="button" class="btn-ghost">重置</button>
         </div>
-      </form>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <span id="status" class="muted"></span>
+      </div>
     </div>
 
+    <!-- 格式列表（放在运行信息上方） -->
     <div class="card" style="margin-top:14px;">
-      <div class="row">
-        <div><b>运行信息</b></div>
-        <div class="muted" id="runMeta"></div>
+      <div class="row-between">
+        <h3 style="margin:0;">格式列表（720p+ / 音频100kbps+）</h3>
+        <div class="row">
+          <label class="toggle" title="默认隐藏 query/meta 等调试工件">
+            <input id="showDebugArts" type="checkbox">
+            <span class="muted">显示调试工件</span>
+          </label>
+        </div>
       </div>
 
       <div id="videoMeta" class="video-meta" style="display:none;"></div>
 
-      <div id="steps" style="margin-top:12px;"></div>
+      <div id="formatsHint" class="muted" style="margin-top:8px;">（先点击“解析 / 查询”获取格式列表）</div>
 
-      <div class="row" style="margin-top:14px; justify-content: space-between;">
-        <h3 style="margin:0;">Artifacts（构建工件）</h3>
-        <label class="toggle">
-          <input id="showMeta" type="checkbox">
-          <span class="muted">显示 meta 工件</span>
-        </label>
+      <div id="formatsZone" class="hide" style="margin-top:12px;">
+        <div class="modebar" role="tablist" aria-label="下载模式">
+          <div class="modebtn" id="modeV" role="tab" aria-selected="false">只下载视频</div>
+          <div class="modebtn" id="modeA" role="tab" aria-selected="false">只下载音频</div>
+          <div class="modebtn active" id="modeVA" role="tab" aria-selected="true">下载视频 + 音频</div>
+        </div>
+
+        <div class="muted" id="autoPickNote"></div>
+
+        <!-- 时间段（必须查询后才允许输入） -->
+        <div class="time-grid">
+          <div>
+            <label>启用指定时间段</label>
+            <select id="enableSections">
+              <option>否</option>
+              <option>是</option>
+            </select>
+          </div>
+
+          <div class="time-pair" style="display: contents;">
+            <div>
+              <label>开始时间</label>
+              <input id="startTime" placeholder="mm:ss 或 hh:mm:ss">
+            </div>
+            <div>
+              <label>结束时间</label>
+              <input id="endTime" placeholder="mm:ss 或 hh:mm:ss">
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <button id="btnDownload" type="button">提交下载任务</button>
+          <span class="muted" id="downloadTip"></span>
+        </div>
+
+        <hr style="margin-top:14px;">
+
+        <div id="pickArea">
+          <div class="subgrid">
+            <div>
+              <div class="row-between">
+                <b>视频流（单选）</b>
+                <span class="muted" id="videoCount"></span>
+              </div>
+              <div id="videoTable"></div>
+            </div>
+
+            <div id="audioPanel">
+              <div class="row-between">
+                <b>音频流（单选）</b>
+                <span class="muted" id="audioCount"></span>
+              </div>
+              <div id="audioTable"></div>
+              <div class="muted" style="margin-top:8px;">
+                “视频+音频”模式下音频将自动选择（列表仅供查看）
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 如果 formats.json 不存在，临时显示 formats.txt（调试） -->
+        <div id="formatsTxtBox" class="hide" style="margin-top:14px;">
+          <div class="row-between">
+            <b>原始 formats.txt（临时展示）</b>
+            <span class="muted">未检测到 formats.json，请更新 workflow</span>
+          </div>
+          <pre id="formatsTxt">(空)</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- 运行信息 + 步骤 + artifacts -->
+    <div class="card" style="margin-top:14px;">
+      <div class="row-between">
+        <div><b>运行信息</b></div>
+        <div class="muted" id="runMeta"></div>
       </div>
 
-      <div class="muted" id="artNote" style="margin-top:6px;">（运行完成后自动加载）</div>
+      <div id="steps" style="margin-top:12px;"></div>
+
+      <div class="row-between" style="margin-top:14px;">
+        <h3 style="margin:0;">Artifacts（构建工件）</h3>
+        <span class="muted" id="artNote">（下载完成后自动加载）</span>
+      </div>
+
       <div id="artifacts"></div>
 
-      <h3 style="margin-top:16px;">查询结果（formats.txt）</h3>
-      <pre id="result">(等待查询完成...)</pre>
+      <div id="debugArts" class="hide" style="margin-top:14px;">
+        <h3 style="margin:0 0 8px;">调试工件（可选）</h3>
+        <div class="muted" style="margin-bottom:8px;">包含 query/meta 等工件下载入口（默认隐藏）</div>
+        <div id="debugArtifacts"></div>
+      </div>
     </div>
   </div>
 
@@ -562,12 +623,10 @@
   document.addEventListener("click", (e) => {
     const a = e.target.closest("a[data-dl='1']");
     if (!a) return;
-
     const runId = a.dataset.runid;
     const artName = a.dataset.artname;
     const prefix = a.dataset.prefix || "Artifact";
     if (!runId || !artName) return;
-
     a.href = buildArtifactZipUrl(runId, artName, prefix);
   }, { capture: true });
 
@@ -676,28 +735,21 @@
     return `${x.toFixed(i===0?0:2)} ${units[i]}`;
   }
 
-  async function downloadZipAndExtractText(runId, artifactName, targetSuffix){
+  async function downloadZipFiles(runId, artifactName){
     const u = new URL(WORKER_BASE + "/artifact-zip");
     u.searchParams.set("run_id", runId);
     u.searchParams.set("name", artifactName);
-
     const zipResp = await fetch(u.toString(), { credentials:"include" });
-    if(!zipResp.ok){
-      throw new Error(await zipResp.text());
-    }
+    if(!zipResp.ok) throw new Error(await zipResp.text());
     const buf = await zipResp.arrayBuffer();
-    const files = unzipSync(new Uint8Array(buf));
+    return unzipSync(new Uint8Array(buf));
+  }
+
+  async function downloadZipAndExtractText(runId, artifactName, targetSuffix){
+    const files = await downloadZipFiles(runId, artifactName);
     const key = Object.keys(files).find(k => k.endsWith(targetSuffix));
     if(!key) throw new Error(`zip 中未找到 ${targetSuffix}`);
     return strFromU8(files[key]);
-  }
-
-  async function tryLoadMeta(runId, requestId, artifactsJson){
-    const metaName = `meta-${requestId}`;
-    const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
-    if(!exists) return null;
-    const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
-    return JSON.parse(txt);
   }
 
   function renderVideoMeta(meta){
@@ -719,8 +771,8 @@
     })();
 
     const channel = meta.channel || meta.uploader || "";
-    const res = meta?.selected?.resolution || "";
-    const fmt = meta.requested_format || "";
+    const res = meta?.selected?.resolution || meta?.selected_resolution || "";
+    const fmt = meta.requested_format || meta.selected_format || "";
 
     box.innerHTML = `
       <div class="title">${esc(title)}</div>
@@ -734,44 +786,388 @@
     box.style.display = "block";
   }
 
-  function shouldShowArtifact(name){
-    const showMeta = $("showMeta").checked;
-    if (name.startsWith("meta-")) return showMeta;
-    return true;
+  // ====== 运行状态（两段式） ======
+  let phase = "idle"; // idle | querying | queried | downloading
+
+  const state = {
+    video_link: "",
+    video_id: null,
+    thumb_fallback: null,
+
+    query: {
+      request_id: null,
+      run_id: null,
+      html_url: null,
+      formats: null, // {video:{}, videos:[], audios:[]}
+      raw_formats_txt: null,
+    },
+
+    download: {
+      request_id: null,
+      run_id: null,
+      html_url: null,
+      meta: null,
+      artifacts: null,
+      runInfo: null,
+    },
+
+    pick: {
+      mode: "va", // va | v | a
+      video_id: null, // selected video format_id
+      audio_id: null, // selected audio format_id (only for mode a)
+      auto_audio_id: null,
+      auto_audio_reason: "",
+    }
+  };
+
+  function setPhase(p){
+    phase = p;
+
+    const queried = (p === "queried" || p === "downloading");
+    const downloading = (p === "downloading");
+    const busy = (p === "querying" || p === "downloading");
+
+    $("btnQuery").disabled = busy || !String($("videoLink").value || "").trim();
+    $("btnReset").disabled = busy;
+
+    // formats zone visibility
+    $("formatsZone").classList.toggle("hide", !queried);
+    $("formatsHint").classList.toggle("hide", queried);
+
+    // lock pick area during download
+    $("pickArea").classList.toggle("disabled-zone", downloading);
+
+    // time inputs: only after queried; and start/end depends on enableSections
+    $("enableSections").disabled = !queried || downloading;
+    const en = $("enableSections").value === "是";
+    $("startTime").disabled = !queried || downloading || !en;
+    $("endTime").disabled = !queried || downloading || !en;
+
+    $("btnDownload").disabled = !queried || downloading;
+    $("downloadTip").textContent = downloading ? "（下载任务运行中，等待完成后可再次选择）" : "";
+
+    // mode buttons disabled during download
+    for(const id of ["modeV","modeA","modeVA"]) {
+      $(id).style.pointerEvents = downloading ? "none" : "auto";
+      $(id).style.opacity = downloading ? ".55" : "1";
+    }
   }
 
-  // ===== 关键修复点：缓存上一次 artifacts + 支持 checkbox 触发重新渲染 =====
-  let lastRunId = null;
-  let lastRequestId = null;
-  let lastArtifactsJson = null;
-  let lastMetaObj = null;
-  let lastThumbFallback = null;
+  function resetAllUI(){
+    state.video_link = "";
+    state.video_id = null;
+    state.thumb_fallback = null;
 
-  $("showMeta").addEventListener("change", () => {
-    if (lastArtifactsJson && lastRunId && lastRequestId) {
-      renderArtifacts(lastRunId, lastRequestId, lastArtifactsJson, lastMetaObj, lastThumbFallback);
+    state.query = { request_id:null, run_id:null, html_url:null, formats:null, raw_formats_txt:null };
+    state.download = { request_id:null, run_id:null, html_url:null, meta:null, artifacts:null, runInfo:null };
+    state.pick = { mode:"va", video_id:null, audio_id:null, auto_audio_id:null, auto_audio_reason:"" };
+
+    $("status").textContent = "";
+    $("runMeta").textContent = "";
+    $("steps").innerHTML = "";
+    $("artifacts").innerHTML = "";
+    $("debugArtifacts").innerHTML = "";
+    $("artNote").textContent = "（下载完成后自动加载）";
+
+    $("formatsZone").classList.add("hide");
+    $("formatsHint").classList.remove("hide");
+    $("formatsTxtBox").classList.add("hide");
+    $("formatsTxt").textContent = "(空)";
+
+    $("videoTable").innerHTML = "";
+    $("audioTable").innerHTML = "";
+    $("videoCount").textContent = "";
+    $("audioCount").textContent = "";
+    $("autoPickNote").textContent = "";
+
+    $("enableSections").value = "否";
+    $("startTime").value = "";
+    $("endTime").value = "";
+    renderVideoMeta(null);
+
+    // mode default
+    setMode("va");
+    setPhase("idle");
+  }
+
+  function setMode(mode){
+    state.pick.mode = mode;
+    $("modeV").classList.toggle("active", mode==="v");
+    $("modeA").classList.toggle("active", mode==="a");
+    $("modeVA").classList.toggle("active", mode==="va");
+
+    // audio panel lock in va mode
+    const audioPanel = $("audioPanel");
+    if(mode === "va"){
+      audioPanel.style.opacity = ".62";
+      audioPanel.style.filter = "grayscale(.08)";
+      audioPanel.style.pointerEvents = "none";
+    } else if(mode === "v"){
+      audioPanel.style.opacity = ".62";
+      audioPanel.style.filter = "grayscale(.08)";
+      audioPanel.style.pointerEvents = "none";
+    } else {
+      audioPanel.style.opacity = "1";
+      audioPanel.style.filter = "none";
+      audioPanel.style.pointerEvents = "auto";
     }
+
+    // clear incompatible picks
+    if(mode === "a"){
+      state.pick.video_id = null;
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "";
+    } else if(mode === "v"){
+      state.pick.audio_id = null;
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "";
+    } else { // va
+      state.pick.audio_id = null; // manual audio selection forbidden
+      // keep selected video if any, then re-compute auto audio
+      if(state.pick.video_id) computeAutoAudio();
+    }
+
+    rerenderPickTables();
+  }
+
+  $("modeV").addEventListener("click", ()=> setMode("v"));
+  $("modeA").addEventListener("click", ()=> setMode("a"));
+  $("modeVA").addEventListener("click", ()=> setMode("va"));
+
+  $("enableSections").addEventListener("change", ()=> setPhase(phase));
+  $("videoLink").addEventListener("input", ()=>{
+    const v = String($("videoLink").value||"").trim();
+    $("btnQuery").disabled = (phase==="querying" || phase==="downloading") || !v;
   });
 
-  function renderArtifacts(runId, requestId, artifactsJson, meta, thumbUrlFallback){
-    // 缓存，确保 toggle 时可重绘
-    lastRunId = runId;
-    lastRequestId = requestId;
-    lastArtifactsJson = artifactsJson;
-    lastMetaObj = meta;
-    lastThumbFallback = thumbUrlFallback;
+  $("btnReset").addEventListener("click", ()=>{
+    if(phase==="querying" || phase==="downloading") return;
+    $("videoLink").value = "";
+    resetAllUI();
+  });
 
-    const artsAll = artifactsJson.artifacts || [];
-    const arts = artsAll.filter(a => shouldShowArtifact(a.name));
+  // ====== formats 渲染与选择 ======
+  function normNumber(x){
+    if(x == null) return null;
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  }
 
-    if(!arts.length){
-      $("artifacts").innerHTML = "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
+  function isDrcFormatId(id){
+    const s = String(id||"");
+    return s.endsWith("-drc") || s.includes("drc");
+  }
+
+  function pickBestAudio(audios, preferredId){
+    const arr = Array.isArray(audios) ? audios.slice() : [];
+    // prefer exact ID if exists
+    if(preferredId){
+      const hit = arr.find(a => String(a.format_id) === String(preferredId));
+      if(hit) return { a: hit, reason: `优先选择 ${preferredId}` };
+    }
+    // sort by abr desc, non-drc first
+    arr.sort((x,y)=>{
+      const dx = isDrcFormatId(x.format_id) ? 1 : 0;
+      const dy = isDrcFormatId(y.format_id) ? 1 : 0;
+      if(dx !== dy) return dx - dy;
+      const ax = normNumber(x.abr) ?? normNumber(x.tbr) ?? 0;
+      const ay = normNumber(y.abr) ?? normNumber(y.tbr) ?? 0;
+      return ay - ax;
+    });
+    const best = arr[0] || null;
+    return { a: best, reason: best ? `选择最高码率音频 ${best.format_id}` : "未找到可用音频" };
+  }
+
+  function computeAutoAudio(){
+    const formats = state.query.formats;
+    if(!formats) return;
+
+    const vids = formats.videos || [];
+    const auds = formats.audios || [];
+    const v = vids.find(x => String(x.format_id) === String(state.pick.video_id));
+    if(!v){
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "";
+      $("autoPickNote").textContent = "";
       return;
     }
 
-    const queryName = `query-result-${requestId}`;
-    const downloadName = `downloaded-videos-${requestId}`;
-    const thumbUrl = meta?.thumbnail || thumbUrlFallback || "";
+    const hasAudio = String(v.acodec || "none") !== "none";
+    if(hasAudio){
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "该视频流自带音频（无需额外音频）";
+      $("autoPickNote").textContent = `提示：${state.pick.auto_audio_reason}`;
+      return;
+    }
+
+    const ext = String(v.ext || "").toLowerCase();
+    const vcodec = String(v.vcodec || "").toLowerCase();
+
+    let prefer = null;
+    // mp4系优先 140；webm系优先 251
+    if(ext === "mp4" || vcodec.includes("avc") || vcodec.includes("h264")) prefer = "140";
+    else if(ext === "webm" || vcodec.includes("vp9") || vcodec.includes("av01")) prefer = "251";
+
+    let res = pickBestAudio(auds, prefer);
+    if(!res.a && prefer){
+      // if preferred not found, fallback already in pickBestAudio
+      res = pickBestAudio(auds, null);
+    }
+
+    state.pick.auto_audio_id = res.a ? String(res.a.format_id) : null;
+    state.pick.auto_audio_reason = res.reason;
+    $("autoPickNote").textContent = state.pick.auto_audio_id
+      ? `自动搭配音频：${state.pick.auto_audio_id}（${state.pick.auto_audio_reason}）`
+      : `自动搭配音频失败：${state.pick.auto_audio_reason}`;
+  }
+
+  function renderFormatsTable(type, rows, pickedId, onPick){
+    const isVideo = (type === "video");
+    const cols = isVideo
+      ? ["ID","EXT","分辨率","FPS","协议","码率","VCODEC","ACODEC","备注"]
+      : ["ID","EXT","码率(abr)","协议","ACODEC","备注"];
+
+    let html = `<div class="table-wrap"><table class="tbl">
+      <thead class="thead-formats"><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>`;
+
+    for(const r of (rows || [])){
+      const id = String(r.format_id ?? "");
+      const picked = (String(pickedId||"") === id);
+
+      const protocol = r.protocol || r.proto || "";
+      const note = r.note || r.format_note || r.more_info || "";
+      const tbr = normNumber(r.tbr);
+      const abr = normNumber(r.abr);
+
+      const bitrateText = isVideo
+        ? (tbr != null ? `${Math.round(tbr)}k` : "")
+        : (abr != null ? `${Math.round(abr)}k` : (tbr != null ? `${Math.round(tbr)}k` : ""));
+
+      const res = (()=>{
+        const h = normNumber(r.height);
+        const w = normNumber(r.width);
+        if(h && w) return `${h}p (${w}x${h})`;
+        if(h) return `${h}p`;
+        const s = String(r.resolution || r.res || "");
+        return s || "";
+      })();
+
+      const fps = normNumber(r.fps);
+      const vcodec = r.vcodec || "";
+      const acodec = r.acodec || "";
+      const ext = r.ext || "";
+
+      const trCls = ["pick-row", picked ? "picked" : ""].filter(Boolean).join(" ");
+
+      const cells = isVideo ? [
+        id, ext, res, (fps!=null?fps:""), protocol, bitrateText, vcodec, acodec, note
+      ] : [
+        id, ext, bitrateText, protocol, acodec, note
+      ];
+
+      html += `<tr class="${escAttr(trCls)}" data-id="${escAttr(id)}" data-type="${escAttr(type)}">
+        ${cells.map(v=>`<td><div class="cell-inner">${esc(v ?? "")}</div></td>`).join("")}
+      </tr>`;
+    }
+
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  function rerenderPickTables(){
+    const formats = state.query.formats;
+    if(!formats) return;
+
+    const vids = formats.videos || [];
+    const auds = formats.audios || [];
+
+    $("videoCount").textContent = `${vids.length} 条`;
+    $("audioCount").textContent = `${auds.length} 条`;
+
+    $("videoTable").innerHTML = renderFormatsTable("video", vids, state.pick.video_id, ()=>{});
+    $("audioTable").innerHTML = renderFormatsTable("audio", auds, state.pick.audio_id, ()=>{});
+
+    // attach click handlers by event delegation
+    for(const tr of $("videoTable").querySelectorAll("tr.pick-row")){
+      tr.addEventListener("click", ()=>{
+        if(phase === "downloading") return;
+        const id = tr.dataset.id;
+        state.pick.video_id = id;
+        if(state.pick.mode === "va") computeAutoAudio();
+        rerenderPickTables();
+      });
+    }
+
+    for(const tr of $("audioTable").querySelectorAll("tr.pick-row")){
+      tr.addEventListener("click", ()=>{
+        if(phase === "downloading") return;
+        if(state.pick.mode !== "a") return;
+        const id = tr.dataset.id;
+        state.pick.audio_id = id;
+        rerenderPickTables();
+      });
+    }
+
+    // mode-based notes
+    if(state.pick.mode === "va"){
+      computeAutoAudio();
+    } else if(state.pick.mode === "v"){
+      $("autoPickNote").textContent = "模式：只下载视频（无需选择音频）";
+    } else {
+      $("autoPickNote").textContent = "模式：只下载音频（请选择一个音频流）";
+    }
+  }
+
+  function buildFormatSpecForDownload(){
+    const mode = state.pick.mode;
+
+    // no selection fallback
+    if(mode === "va"){
+      if(!state.pick.video_id) return "bestvideo+bestaudio";
+      const v = state.query.formats?.videos?.find(x => String(x.format_id) === String(state.pick.video_id));
+      if(!v) return "bestvideo+bestaudio";
+      const hasAudio = String(v.acodec || "none") !== "none";
+      if(hasAudio) return String(v.format_id);
+      const aId = state.pick.auto_audio_id;
+      if(aId) return `${v.format_id}+${aId}`;
+      return "bestvideo+bestaudio";
+    }
+
+    if(mode === "v"){
+      if(!state.pick.video_id) return "bestvideo";
+      return String(state.pick.video_id);
+    }
+
+    // mode === "a"
+    if(!state.pick.audio_id) return "bestaudio";
+    return String(state.pick.audio_id);
+  }
+
+  // ====== artifacts 渲染（下载产物 + 可选调试工件） ======
+  function renderArtifactsTable(runId, artifactsJson, preferredRequestId){
+    const artsAll = artifactsJson.artifacts || [];
+    if(!artsAll.length){
+      return "<div class='muted'>（没有 artifacts）</div>";
+    }
+
+    const thumbUrl = state.download.meta?.thumbnail || state.query.formats?.video?.thumbnail || state.thumb_fallback || "";
+    const downloadReq = state.download.request_id;
+    const queryReq = state.query.request_id;
+
+    const isDebug = $("showDebugArts").checked;
+
+    // 下载产物：只默认显示 downloaded-videos-*
+    const show = (name) => {
+      if(name.startsWith("downloaded-videos-")) return true;
+      if(!isDebug) return false;
+      // debug show: meta-, query-result- 等
+      return true;
+    };
+
+    const arts = artsAll.filter(a => show(a.name));
+    if(!arts.length){
+      return "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
+    }
 
     let html = `<div class="table-wrap"><table class="tbl">
       <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>下载</th></tr></thead><tbody>`;
@@ -781,37 +1177,16 @@
       const size = a.size_in_bytes;
 
       const badges = [];
-      if(name === queryName) badges.push(`<span class="pill">query</span>`);
-      if(name === downloadName) badges.push(`<span class="pill">download</span>`);
-      if(name.startsWith("meta-")) badges.push(`<span class="pill">meta</span>`);
-
-      let nameCell = `<div class="cell-inner"><div class="name-main">${esc(name)}</div></div>`;
-      if(name === downloadName && meta?.title){
-        nameCell = `
-          <div class="cell-inner">
-            <div class="name-main">${esc(meta.title)}</div>
-            <div class="name-sub">${esc(name)}</div>
-          </div>`;
-      } else if (name.startsWith("meta-")) {
-        nameCell = `
-          <div class="cell-inner">
-            <div class="name-main">meta.json</div>
-            <div class="name-sub">${esc(name)}</div>
-          </div>`;
-      } else if (name === queryName) {
-        nameCell = `
-          <div class="cell-inner">
-            <div class="name-main">formats.txt</div>
-            <div class="name-sub">${esc(name)}</div>
-          </div>`;
-      }
+      if(downloadReq && name === `downloaded-videos-${downloadReq}`) badges.push(`<span class="pill">download</span>`);
+      if(downloadReq && name === `meta-${downloadReq}`) badges.push(`<span class="pill">meta</span>`);
+      if(queryReq && name === `query-result-${queryReq}`) badges.push(`<span class="pill">query</span>`);
 
       const baseHref = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
 
       let prefix = "Artifact";
-      if (name === downloadName) prefix = "YouTube";
-      else if (name === queryName) prefix = "Formats";
-      else if (name.startsWith("meta-")) prefix = "Meta";
+      if(name.startsWith("downloaded-videos-")) prefix = "YouTube";
+      else if(name.startsWith("meta-")) prefix = "Meta";
+      else if(name.startsWith("query-result-")) prefix = "Formats";
 
       let downloadHtml = `
         <div class="cell-inner">
@@ -819,8 +1194,8 @@
              href="${escAttr(baseHref)}">⬇ 下载zip</a>
         </div>`;
 
-      if(name === downloadName){
-        const res = meta?.selected?.resolution || null;
+      if(name.startsWith("downloaded-videos-")){
+        const res = state.download.meta?.selected?.resolution || null;
         downloadHtml = `
           <div class="cell-inner">
             <a data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="${escAttr(prefix)}"
@@ -832,117 +1207,358 @@
 
       html += `<tr>
         <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${escAttr(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
-        <td>${nameCell} ${badges.join(" ")}</td>
+        <td><div class="cell-inner"><div style="font-weight:900;">${esc(name)}</div></div> ${badges.join(" ")}</td>
         <td><div class="cell-inner">${esc(humanBytes(size))}</div></td>
         <td>${downloadHtml}</td>
       </tr>`;
     }
 
     html += "</tbody></table></div>";
-    $("artifacts").innerHTML = html;
+    return html;
   }
 
-  $("f").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    $("btn").disabled = true;
+  async function tryLoadMetaFromRun(runId, requestId, artifactsJson){
+    const metaName = `meta-${requestId}`;
+    const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
+    if(!exists) return null;
+    const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
+    return JSON.parse(txt);
+  }
 
-    // 清空缓存（避免 toggle 显示旧 run 的 artifacts）
-    lastRunId = lastRequestId = null;
-    lastArtifactsJson = lastMetaObj = lastThumbFallback = null;
+  function cleanFormatsTxt(txt){
+    // 只保留从表头开始的内容（尽量去掉 [youtube]... 这些行）
+    const lines = String(txt||"").split(/\r?\n/);
+    let idx = lines.findIndex(l => l.startsWith("ID") && l.includes("EXT") && l.includes("RESOLUTION"));
+    if(idx < 0) idx = lines.findIndex(l => l.startsWith("ID") && l.includes("EXT"));
+    if(idx < 0) return txt;
+    return lines.slice(idx).join("\n").trim();
+  }
 
-    $("result").textContent = "(等待查询完成...)";
-    $("steps").innerHTML = "";
-    $("runMeta").textContent = "";
-    $("artifacts").innerHTML = "";
-    $("artNote").textContent = "（运行完成后自动加载）";
-    $("status").textContent = "正在触发工作流...";
-    renderVideoMeta(null);
+  // ====== run 调度与轮询 ======
+  async function dispatchWorkflow(inputs){
+    return await postJSON("/dispatch", { ref: "main", inputs });
+  }
 
-    const fd = new FormData(e.target);
-    const request_id = uuid();
-
-    const inputs = {
-      request_id,
-      action_type: fd.get("action_type"),
-      video_link: fd.get("video_link"),
-      video_format: fd.get("video_format") || "",
-      enable_sections: fd.get("enable_sections") || "否",
-      start_time: fd.get("start_time") || "",
-      end_time: fd.get("end_time") || "",
-    };
-
-    if(inputs.action_type === "下载" && !inputs.video_format){
-      alert("下载模式需要填写 视频格式代码");
-      $("btn").disabled = false;
-      return;
-    }
-
-    const vid = parseYouTubeId(inputs.video_link);
-    const thumbFallback = ytThumbFromId(vid);
-
-    await postJSON("/dispatch", { ref: "main", inputs });
-    $("status").textContent = `已触发，request_id=${request_id}，正在定位 run...`;
-
-    let run = null;
+  async function resolveRun(request_id){
     for(let i=0;i<45;i++){
       const res = await fetchJSON(`/resolve?request_id=${encodeURIComponent(request_id)}`);
-      if(res.found){ run = res.run; break; }
+      if(res.found) return res.run;
       await sleep(1000);
     }
+    return null;
+  }
+
+  async function pollRunToEnd(runId, onTick){
+    while(true){
+      const runInfo = await fetchJSON(`/run?run_id=${runId}`);
+      const jobs = await fetchJSON(`/jobs?run_id=${runId}`);
+      onTick?.(runInfo, jobs);
+      if(runInfo.status === "completed") return runInfo;
+      await sleep(2000);
+    }
+  }
+
+  function renderRunMeta(){
+    const q = state.query;
+    const d = state.download;
+
+    let html = "";
+    if(q.run_id){
+      html += `查询 run_id=${esc(q.run_id)} `;
+      if(q.html_url) html += `| <a href="${escAttr(q.html_url)}" target="_blank">打开查询运行</a>`;
+      html += "<br>";
+    }
+    if(d.run_id){
+      html += `下载 run_id=${esc(d.run_id)} `;
+      if(d.html_url) html += `| <a href="${escAttr(d.html_url)}" target="_blank">打开下载运行</a>`;
+    }
+    $("runMeta").innerHTML = html || "";
+  }
+
+  $("showDebugArts").addEventListener("change", ()=>{
+    $("debugArts").classList.toggle("hide", !$("showDebugArts").checked);
+    // refresh artifacts view if already loaded
+    if(state.download.run_id && state.download.artifacts){
+      $("artifacts").innerHTML = renderArtifactsTable(state.download.run_id, state.download.artifacts);
+    }
+    if($("showDebugArts").checked){
+      renderDebugArtifactsPanel();
+    }
+  });
+
+  async function renderDebugArtifactsPanel(){
+    // debug panel shows: query run artifact link (if exists) + meta artifact link (if exists)
+    const parts = [];
+
+    // query
+    if(state.query.run_id && state.query.request_id){
+      try{
+        const arts = await fetchJSON(`/artifacts?run_id=${state.query.run_id}`);
+        const qname = `query-result-${state.query.request_id}`;
+        const exists = (arts.artifacts||[]).some(a => a.name === qname);
+        if(exists){
+          parts.push(`
+            <div class="muted" style="margin:6px 0 8px;"><b>Query 工件</b></div>
+            <a class="dl-btn" data-dl="1" data-runid="${escAttr(state.query.run_id)}" data-artname="${escAttr(qname)}" data-prefix="Formats"
+               href="${escAttr(WORKER_BASE + "/artifact-zip?run_id="+encodeURIComponent(state.query.run_id)+"&name="+encodeURIComponent(qname))}">
+               ⬇ 下载 query-result zip
+            </a>
+          `);
+        } else {
+          parts.push(`<div class="muted">（未找到 query 工件：${esc(qname)}）</div>`);
+        }
+      } catch(e){
+        parts.push(`<div class="muted">加载 query 调试工件失败：${esc(String(e))}</div>`);
+      }
+    }
+
+    // download meta
+    if(state.download.run_id && state.download.request_id){
+      try{
+        const arts = state.download.artifacts || await fetchJSON(`/artifacts?run_id=${state.download.run_id}`);
+        const mname = `meta-${state.download.request_id}`;
+        const exists = (arts.artifacts||[]).some(a => a.name === mname);
+        if(exists){
+          parts.push(`
+            <div class="muted" style="margin:14px 0 8px;"><b>Download meta 工件</b></div>
+            <a class="dl-btn" data-dl="1" data-runid="${escAttr(state.download.run_id)}" data-artname="${escAttr(mname)}" data-prefix="Meta"
+               href="${escAttr(WORKER_BASE + "/artifact-zip?run_id="+encodeURIComponent(state.download.run_id)+"&name="+encodeURIComponent(mname))}">
+               ⬇ 下载 meta zip
+            </a>
+          `);
+        }
+      } catch(e){
+        parts.push(`<div class="muted">加载 meta 调试工件失败：${esc(String(e))}</div>`);
+      }
+    }
+
+    $("debugArtifacts").innerHTML = parts.join("<div style='height:10px;'></div>") || "<div class='muted'>(暂无)</div>";
+  }
+
+  // ====== 主流程：查询 ======
+  async function doQuery(){
+    const link = String($("videoLink").value||"").trim();
+    if(!link) return;
+
+    // reset previous query+download but keep debug toggle
+    const debugOn = $("showDebugArts").checked;
+    resetAllUI();
+    $("showDebugArts").checked = debugOn;
+    $("debugArts").classList.toggle("hide", !debugOn);
+
+    state.video_link = link;
+    state.video_id = parseYouTubeId(link);
+    state.thumb_fallback = ytThumbFromId(state.video_id);
+
+    setPhase("querying");
+    $("status").textContent = "正在触发查询工作流...";
+    $("videoLink").disabled = true;
+
+    const request_id = uuid();
+    state.query.request_id = request_id;
+
+    // 触发查询（保持与现有 workflow 兼容）
+    await dispatchWorkflow({
+      request_id,
+      action_type: "查询",
+      video_link: link,
+      video_format: "",
+      enable_sections: "否",
+      start_time: "",
+      end_time: "",
+    });
+
+    $("status").textContent = `已触发查询，request_id=${request_id}，正在定位 run...`;
+
+    const run = await resolveRun(request_id);
     if(!run){
-      $("status").textContent = "未能定位到 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
-      $("btn").disabled = false;
+      $("status").textContent = "未能定位到查询 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
+      $("videoLink").disabled = false;
+      setPhase("idle");
       return;
     }
 
-    const runId = run.id;
-    $("runMeta").innerHTML = `run_id=${runId} | <a href="${run.html_url}" target="_blank">打开 GitHub 运行页面</a>`;
-    $("status").textContent = "运行中...";
+    state.query.run_id = run.id;
+    state.query.html_url = run.html_url;
+    renderRunMeta();
 
-    let runInfo = null;
-    while(true){
-      runInfo = await fetchJSON(`/run?run_id=${runId}`);
-      const jobs = await fetchJSON(`/jobs?run_id=${runId}`);
+    $("status").textContent = "查询运行中...";
+    await pollRunToEnd(run.id, (runInfo, jobs)=>{
       renderSteps(jobs);
-
       const st = `${runInfo.status}${runInfo.conclusion ? " / " + runInfo.conclusion : ""}`;
-      $("status").textContent = `状态：${st}`;
+      $("status").textContent = `查询状态：${st}`;
+    });
 
-      if(runInfo.status === "completed") break;
-      await sleep(2000);
-    }
+    // 查询结束后加载 formats artifact
+    try{
+      $("status").textContent = "查询已完成，正在加载格式列表...";
+      const arts = await fetchJSON(`/artifacts?run_id=${state.query.run_id}`);
+      const qname = `query-result-${state.query.request_id}`;
 
-    try {
-      $("artNote").textContent = "正在加载 artifacts...";
-      const arts = await fetchJSON(`/artifacts?run_id=${runId}`);
-      const meta = await tryLoadMeta(runId, request_id, arts);
-
-      renderVideoMeta(meta);
-
-      // 关键：每次加载 artifacts 后用 renderArtifacts（会缓存，以便 toggle 刷新）
-      renderArtifacts(runId, request_id, arts, meta, thumbFallback);
-
-      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`
-        + (meta?.selected?.resolution ? `；识别到分辨率：${meta.selected.resolution}` : "");
-    } catch (err) {
-      $("artNote").textContent = "加载 artifacts/meta 失败：" + String(err);
-    }
-
-    if(inputs.action_type === "查询" && runInfo.conclusion === "success"){
-      const artName = `query-result-${request_id}`;
-      $("status").textContent = "查询已完成，正在获取 formats.txt ...";
+      // 优先读取 formats.json
+      let formatsObj = null;
       try{
-        const txt = await downloadZipAndExtractText(runId, artName, "formats.txt");
-        $("result").textContent = txt;
-      }catch(e){
-        $("result").textContent = "下载查询结果 artifact 失败：" + String(e);
+        const files = await downloadZipFiles(state.query.run_id, qname);
+        const jsonKey = Object.keys(files).find(k => k.endsWith("formats.json"));
+        if(jsonKey){
+          const jsonTxt = strFromU8(files[jsonKey]);
+          formatsObj = JSON.parse(jsonTxt);
+        } else {
+          // fallback formats.txt
+          const txtKey = Object.keys(files).find(k => k.endsWith("formats.txt"));
+          if(txtKey){
+            const raw = strFromU8(files[txtKey]);
+            state.query.raw_formats_txt = cleanFormatsTxt(raw);
+          }
+        }
+      } catch(e){
+        // if artifact missing or cannot read, surface it
+        throw e;
       }
-    } else {
-      $("result").textContent = "（非查询模式，或运行失败。请在上方 Artifacts 区下载成品；或打开 GitHub 运行页面查看日志。）";
+
+      if(!formatsObj){
+        // 没有 formats.json：提示更新 workflow；但仍展示 txt（若有）
+        $("formatsZone").classList.remove("hide");
+        $("formatsTxtBox").classList.toggle("hide", !state.query.raw_formats_txt);
+        if(state.query.raw_formats_txt) $("formatsTxt").textContent = state.query.raw_formats_txt;
+        $("status").textContent = "未找到 formats.json（当前 workflow 可能尚未升级）。请更新 ytdlp.yml 后再使用列表选择。";
+        setPhase("queried");
+        $("videoLink").disabled = false;
+        return;
+      }
+
+      // normalize formats object
+      const videoMeta = formatsObj.video || formatsObj.meta || {};
+      const vids = formatsObj.videos || [];
+      const auds = formatsObj.audios || [];
+
+      state.query.formats = { video: videoMeta, videos: vids, audios: auds };
+      renderVideoMeta({
+        title: videoMeta.title,
+        duration: videoMeta.duration,
+        uploader: videoMeta.uploader,
+        channel: videoMeta.channel,
+        thumbnail: videoMeta.thumbnail || state.thumb_fallback,
+      });
+
+      // show formats
+      $("formatsZone").classList.remove("hide");
+      $("formatsTxtBox").classList.add("hide");
+      rerenderPickTables();
+
+      $("status").textContent = `格式列表已加载：视频 ${vids.length} 条 / 音频 ${auds.length} 条。请选择后提交下载任务。`;
+
+      setPhase("queried");
+      $("videoLink").disabled = false;
+
+      if($("showDebugArts").checked) renderDebugArtifactsPanel();
+    } catch(err){
+      $("status").textContent = "加载格式列表失败：" + String(err);
+      setPhase("idle");
+      $("videoLink").disabled = false;
+    }
+  }
+
+  $("btnQuery").addEventListener("click", async ()=>{
+    try{ await doQuery(); } catch(e){ $("status").textContent = String(e); setPhase("idle"); $("videoLink").disabled = false; }
+  });
+
+  // ====== 主流程：下载 ======
+  async function doDownload(){
+    if(!state.query.formats){
+      alert("请先解析/查询，获得格式列表后再下载");
+      return;
     }
 
-    $("btn").disabled = false;
+    setPhase("downloading");
+    $("status").textContent = "正在触发下载工作流...";
+
+    const req = uuid();
+    state.download.request_id = req;
+
+    const formatSpec = buildFormatSpecForDownload();
+
+    const inputs = {
+      request_id: req,
+      action_type: "下载",
+      video_link: state.video_link,
+      video_format: formatSpec,
+      enable_sections: $("enableSections").value,
+      start_time: $("startTime").value || "",
+      end_time: $("endTime").value || "",
+    };
+
+    await dispatchWorkflow(inputs);
+    $("status").textContent = `已触发下载，request_id=${req}，正在定位 run...`;
+
+    const run = await resolveRun(req);
+    if(!run){
+      $("status").textContent = "未能定位到下载 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
+      setPhase("queried");
+      return;
+    }
+
+    state.download.run_id = run.id;
+    state.download.html_url = run.html_url;
+    renderRunMeta();
+
+    $("status").textContent = `下载运行中（fmt=${formatSpec}）...`;
+
+    const runInfo = await pollRunToEnd(run.id, (ri, jobs)=>{
+      renderSteps(jobs);
+      const st = `${ri.status}${ri.conclusion ? " / " + ri.conclusion : ""}`;
+      $("status").textContent = `下载状态：${st}（fmt=${formatSpec}）`;
+    });
+    state.download.runInfo = runInfo;
+
+    try{
+      $("artNote").textContent = "正在加载 artifacts...";
+      const arts = await fetchJSON(`/artifacts?run_id=${state.download.run_id}`);
+      state.download.artifacts = arts;
+
+      // 尝试加载 meta.json（用于展示标题/分辨率等），即使工件默认隐藏也无妨
+      const meta = await tryLoadMetaFromRun(state.download.run_id, state.download.request_id, arts);
+      state.download.meta = meta;
+      if(meta){
+        renderVideoMeta(meta);
+      } else if(state.query.formats?.video){
+        renderVideoMeta({
+          title: state.query.formats.video.title,
+          duration: state.query.formats.video.duration,
+          uploader: state.query.formats.video.uploader,
+          channel: state.query.formats.video.channel,
+          thumbnail: state.query.formats.video.thumbnail || state.thumb_fallback,
+        });
+      }
+
+      $("artifacts").innerHTML = renderArtifactsTable(state.download.run_id, arts);
+      $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`;
+
+      if($("showDebugArts").checked) renderDebugArtifactsPanel();
+    } catch(e){
+      $("artNote").textContent = "加载 artifacts 失败：" + String(e);
+    }
+
+    // 下载结束：解锁列表
+    const conc = (runInfo.conclusion || "").toLowerCase();
+    if(conc === "success"){
+      $("status").textContent = "下载已完成：请在 Artifacts 区下载成品 zip。";
+    } else {
+      $("status").textContent = `下载结束：${runInfo.conclusion || "unknown"}（可打开运行页面查看日志）`;
+    }
+
+    setPhase("queried"); // back to selectable state (keep list)
+  }
+
+  $("btnDownload").addEventListener("click", async ()=>{
+    try{ await doDownload(); } catch(e){
+      $("status").textContent = "提交/运行下载失败：" + String(e);
+      setPhase("queried");
+    }
   });
+
+  // 初始化
+  resetAllUI();
 </script>
 </body>
 </html>
