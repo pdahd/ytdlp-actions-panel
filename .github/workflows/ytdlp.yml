@@ -1,4 +1,4 @@
-# VERSION: WORKFLOW_v1.5.2_forceIPv4_only_keepFFmpegCache_uploadNoCompress
+# VERSION: WORKFLOW_v2.0_queryFormatsJson_keepFFmpegCache_uploadNoCompress
 name: 2026油管视频下载
 
 run-name: yt-dlp-${{ inputs.action_type }}-${{ inputs.request_id }}
@@ -20,7 +20,7 @@ on:
         required: true
         type: string
       video_format:
-        description: '请输入视频格式代码（下载用）'
+        description: '视频格式代码/表达式（下载用，如 299+140 或 bestvideo+bestaudio）'
         required: false
         type: string
       enable_sections:
@@ -52,24 +52,193 @@ jobs:
       - name: Install yt-dlp (with EJS scripts)
         run: pip install -U "yt-dlp[default]"
 
-      # ====== 查询模式：formats.txt ======
-      - name: Query available formats (yt-dlp -F)
+      # =========================================================
+      # 查询模式：生成 formats.json（供网页渲染筛选）+ formats.txt（调试）
+      # =========================================================
+      - name: Query formats (generate info.json + formats.txt)
         if: ${{ github.event.inputs.action_type == '查询' }}
         env:
           COOKIES_CONTENT: ${{ secrets.COOKIES }}
+          VIDEO_LINK: ${{ github.event.inputs.video_link }}
         run: |
           mkdir -p out
-          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -F \
-          "${{ github.event.inputs.video_link }}" | tee out/formats.txt
 
-      - name: Upload query result
+          # 结构化信息（用于生成 formats.json）
+          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -J \
+            "$VIDEO_LINK" > out/info.json
+
+          # 纯文本格式表（调试备用）
+          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -F \
+            "$VIDEO_LINK" | tee out/formats.txt
+
+      - name: Build formats.json (filtered)
+        if: ${{ github.event.inputs.action_type == '查询' }}
+        run: |
+          python3 - <<'PY'
+          import json, re
+
+          with open("out/info.json", "r", encoding="utf-8") as f:
+            info = json.load(f)
+
+          formats = info.get("formats") or []
+
+          def to_num(x):
+            try:
+              if x is None: return None
+              return float(x)
+            except:
+              return None
+
+          def is_storyboard(fmt):
+            # storyboard/图片流通常是 vcodec/acodec 都 none 或 ext=mhtml 等
+            ext = (fmt.get("ext") or "").lower()
+            note = (fmt.get("format_note") or "") + " " + (fmt.get("format") or "")
+            note = note.lower()
+            vcodec = (fmt.get("vcodec") or "none").lower()
+            acodec = (fmt.get("acodec") or "none").lower()
+            if ext in ("mhtml",):
+              return True
+            if "storyboard" in note or "images" in note:
+              return True
+            if vcodec == "none" and acodec == "none":
+              return True
+            return False
+
+          def is_audio_only(fmt):
+            vcodec = (fmt.get("vcodec") or "none").lower()
+            acodec = (fmt.get("acodec") or "none").lower()
+            return vcodec == "none" and acodec != "none"
+
+          def is_video_like(fmt):
+            # 包含 video 的流（video-only 或 progressive）
+            vcodec = (fmt.get("vcodec") or "none").lower()
+            return vcodec != "none"
+
+          def abr_k(fmt):
+            # 以 abr 为主，没有则用 tbr 兜底
+            abr = to_num(fmt.get("abr"))
+            if abr is not None:
+              return abr
+            tbr = to_num(fmt.get("tbr"))
+            return tbr
+
+          def tbr_k(fmt):
+            return to_num(fmt.get("tbr"))
+
+          def is_drc(fmt):
+            fid = str(fmt.get("format_id") or "")
+            return fid.endswith("-drc") or ("drc" in fid)
+
+          # ===== 过滤规则（按你的要求） =====
+          audios = []
+          videos = []
+
+          for f in formats:
+            if is_storyboard(f):
+              continue
+
+            if is_audio_only(f):
+              abr = abr_k(f)
+              if abr is None:
+                continue
+              if abr < 100:
+                continue
+              audios.append(f)
+              continue
+
+            if is_video_like(f):
+              h = to_num(f.get("height"))
+              # 对视频流不展示 720p 以下（无 height 的也不展示）
+              if h is None or h < 720:
+                continue
+              videos.append(f)
+              continue
+
+          # ===== 排序 =====
+          # 视频：height desc, fps desc, tbr desc
+          def fps_num(fmt):
+            return to_num(fmt.get("fps")) or 0.0
+
+          videos.sort(key=lambda x: (
+            -(to_num(x.get("height")) or 0.0),
+            -fps_num(x),
+            -(tbr_k(x) or 0.0),
+          ))
+
+          # 音频：非DRC优先，其次 abr desc
+          audios.sort(key=lambda x: (
+            1 if is_drc(x) else 0,
+            -(abr_k(x) or 0.0),
+          ))
+
+          # ===== 输出简化结构（前端渲染用）=====
+          def slim_video(f):
+            return {
+              "format_id": f.get("format_id"),
+              "ext": f.get("ext"),
+              "width": f.get("width"),
+              "height": f.get("height"),
+              "resolution": f.get("resolution"),
+              "fps": f.get("fps"),
+              "protocol": f.get("protocol"),
+              "vcodec": f.get("vcodec"),
+              "acodec": f.get("acodec"),
+              "tbr": f.get("tbr"),
+              "filesize": f.get("filesize") or f.get("filesize_approx"),
+              "format_note": f.get("format_note"),
+              "note": f.get("format_note") or f.get("format") or "",
+            }
+
+          def slim_audio(f):
+            return {
+              "format_id": f.get("format_id"),
+              "ext": f.get("ext"),
+              "protocol": f.get("protocol"),
+              "acodec": f.get("acodec"),
+              "abr": f.get("abr"),
+              "tbr": f.get("tbr"),
+              "asr": f.get("asr"),
+              "filesize": f.get("filesize") or f.get("filesize_approx"),
+              "format_note": f.get("format_note"),
+              "note": f.get("format_note") or f.get("format") or "",
+            }
+
+          vid = info.get("id")
+          video_meta = {
+            "video_id": vid,
+            "title": info.get("title"),
+            "webpage_url": info.get("webpage_url") or info.get("original_url"),
+            "duration": info.get("duration"),
+            "uploader": info.get("uploader"),
+            "channel": info.get("channel"),
+            "thumbnail": (f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg" if vid else info.get("thumbnail")),
+          }
+
+          out = {
+            "video": video_meta,
+            "videos": [slim_video(x) for x in videos],
+            "audios": [slim_audio(x) for x in audios],
+          }
+
+          with open("out/formats.json", "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+
+          print("formats.json written:", "out/formats.json")
+          print("videos:", len(out["videos"]), "audios:", len(out["audios"]))
+          PY
+
+      - name: Upload query result (formats.json + formats.txt)
         if: ${{ github.event.inputs.action_type == '查询' }}
         uses: actions/upload-artifact@v4
         with:
           name: query-result-${{ github.event.inputs.request_id }}
-          path: out/formats.txt
+          path: |
+            out/formats.json
+            out/formats.txt
 
-      # ====== 下载模式：生成 meta.json（真实分辨率/帧率/标题/时长/频道等） ======
+      # =========================================================
+      # 下载模式：生成 meta.json + 下载 + 上传成品
+      # =========================================================
       - name: Generate meta.json (selected format info)
         if: ${{ github.event.inputs.action_type == '下载' }}
         env:
@@ -80,9 +249,15 @@ jobs:
         run: |
           mkdir -p out
 
-          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -J \
-          -f "$REQUESTED_FORMAT" \
-          "$VIDEO_LINK" > out/info.json
+          # 如果 REQUESTED_FORMAT 为空，就不传 -f，让 yt-dlp 默认 best 逻辑生效
+          if [ -n "$REQUESTED_FORMAT" ]; then
+            yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -J \
+              -f "$REQUESTED_FORMAT" \
+              "$VIDEO_LINK" > out/info.json
+          else
+            yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -J \
+              "$VIDEO_LINK" > out/info.json
+          fi
 
           python3 - <<'PY'
           import json, os
@@ -103,6 +278,11 @@ jobs:
                 video = f
               if not audio and f and f.get("acodec") and f.get("acodec") != "none":
                 audio = f
+            # progressive（单流自带音频）时 requested_formats 可能为空；此时从 info 本身提取
+            if not video and info.get("vcodec") and info.get("vcodec") != "none":
+              video = info
+            if not audio and info.get("acodec") and info.get("acodec") != "none":
+              audio = info
             return video, audio
 
           video, audio = pick_requested(info)
@@ -111,7 +291,6 @@ jobs:
           title = info.get("title")
           webpage_url = info.get("webpage_url") or video_link
 
-          # 2A：封面直接走 i.ytimg.com
           thumb = None
           if vid:
             thumb = f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
@@ -158,10 +337,10 @@ jobs:
               "resolution": resolution,
               "height": height,
               "fps": fps_int,
-              "video_format_id": (video.get("format_id") if video else None),
-              "audio_format_id": (audio.get("format_id") if audio else None),
-              "video_ext": (video.get("ext") if video else None),
-              "audio_ext": (audio.get("ext") if audio else None),
+              "video_format_id": (video.get("format_id") if isinstance(video, dict) else None),
+              "audio_format_id": (audio.get("format_id") if isinstance(audio, dict) else None),
+              "video_ext": (video.get("ext") if isinstance(video, dict) else None),
+              "audio_ext": (audio.get("ext") if isinstance(audio, dict) else None),
             },
             "artifacts": {
               "download_zip_name": f"downloaded-videos-{req_id}"
@@ -211,18 +390,26 @@ jobs:
           which ffprobe
           ffprobe -version
 
-      # ====== 下载模式：下载 + 上传 ======
       - name: Download video and audio
         if: ${{ github.event.inputs.action_type == '下载' }}
         env:
           COOKIES_CONTENT: ${{ secrets.COOKIES }}
+          REQUESTED_FORMAT: ${{ github.event.inputs.video_format }}
         run: |
           mkdir -p downloads
-          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") -f "${{ github.event.inputs.video_format }}" \
-          $([[ "${{ github.event.inputs.enable_sections }}" == "是" ]] && echo --download-sections "*${{ github.event.inputs.start_time }}-${{ github.event.inputs.end_time }}") \
-          --concurrent-fragments 10 \
-          -o "downloads/%(title)s.%(ext)s" \
-          "${{ github.event.inputs.video_link }}"
+
+          # 允许前端传入 bestvideo+bestaudio / bestvideo / bestaudio / 299+140 / 单 format_id 等
+          FARG=()
+          if [ -n "$REQUESTED_FORMAT" ]; then
+            FARG=(-f "$REQUESTED_FORMAT")
+          fi
+
+          yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") \
+            "${FARG[@]}" \
+            $([[ "${{ github.event.inputs.enable_sections }}" == "是" ]] && echo --download-sections "*${{ github.event.inputs.start_time }}-${{ github.event.inputs.end_time }}") \
+            --concurrent-fragments 10 \
+            -o "downloads/%(title)s.%(ext)s" \
+            "${{ github.event.inputs.video_link }}"
 
       - name: Upload downloaded videos
         if: ${{ github.event.inputs.action_type == '下载' }}
