@@ -1,4 +1,4 @@
-# VERSION: WORKFLOW_v1.5.1_forceIPv4_only_keepFFmpegCache
+# VERSION: WORKFLOW_v1.5.2_forceIPv4_only_keepFFmpegCache_uploadNoCompress
 name: 2026油管视频下载
 
 run-name: yt-dlp-${{ inputs.action_type }}-${{ inputs.request_id }}
@@ -181,7 +181,7 @@ jobs:
           name: meta-${{ github.event.inputs.request_id }}
           path: out/meta.json
 
-      # ====== 下载模式：FFmpeg + 缓存（唯一新增/保留的加速点） ======
+      # ====== 下载模式：FFmpeg + 缓存 ======
       - name: Cache FFmpeg (BtbN)
         if: ${{ github.event.inputs.action_type == '下载' }}
         id: cache-ffmpeg
@@ -230,3 +230,4 @@ jobs:
         with:
           name: downloaded-videos-${{ github.event.inputs.request_id }}
           path: downloads/**
+          compression-level: 0
