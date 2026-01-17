@@ -1,4 +1,4 @@
-# VERSION: WORKFLOW_v1.5_forceIPv4_only
+# VERSION: WORKFLOW_v1.6_cachePip_cacheFFmpeg_keepDeno
 name: 2026油管视频下载
 
 run-name: yt-dlp-${{ inputs.action_type }}-${{ inputs.request_id }}
@@ -44,6 +44,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ====== Python + pip cache（加速 pip install / yt-dlp[default]） ======
+      - name: Setup Python (enable pip cache)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          cache: 'pip'
+
+      # ====== 保留 Deno（你要求必须保留） ======
       - name: Setup Deno (EJS runtime)
         uses: denoland/setup-deno@v2
         with:
@@ -181,16 +189,30 @@ jobs:
           name: meta-${{ github.event.inputs.request_id }}
           path: out/meta.json
 
-      # ====== 下载模式：安装 FFmpeg + 下载 + 上传 ======
+      # ====== 下载模式：FFmpeg（加缓存，命中则跳过下载解压） ======
+      - name: Cache FFmpeg (BtbN)
+        if: ${{ github.event.inputs.action_type == '下载' }}
+        id: cache-ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/ffmpeg-btbn
+          key: ffmpeg-btbn-master-latest-linux64-gpl-v1
+
       - name: Install FFmpeg (BtbN Daily Build)
+        if: ${{ github.event.inputs.action_type == '下载' && steps.cache-ffmpeg.outputs.cache-hit != 'true' }}
+        run: |
+          mkdir -p ~/.local/ffmpeg-btbn
+          wget -O /tmp/ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-linux64-gpl.tar.xz
+          tar -xf /tmp/ffmpeg.tar.xz -C ~/.local/ffmpeg-btbn --strip-components=1
+
+      - name: Add FFmpeg to PATH
         if: ${{ github.event.inputs.action_type == '下载' }}
         run: |
-          wget https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-linux64-gpl.tar.xz
-          tar -xf ffmpeg-master-latest-linux64-gpl.tar.xz
-          sudo mv ffmpeg-master-latest-linux64-gpl/bin/ffmpeg /usr/local/bin/
-          sudo mv ffmpeg-master-latest-linux64-gpl/bin/ffprobe /usr/local/bin/
+          echo "$HOME/.local/ffmpeg-btbn/bin" >> $GITHUB_PATH
           ffmpeg -version
+          ffprobe -version
 
+      # ====== 下载模式：下载 + 上传 ======
       - name: Download video and audio
         if: ${{ github.event.inputs.action_type == '下载' }}
         env:
