@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v2.2.1_scrollVideoHeaderCenter_debugInstantScroll -->
+<!-- VERSION: PANEL_UI_v2.2.2_modeOrange_downloadBtnGreenOnPick_artifactsTitleFinal -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -68,6 +68,10 @@
 
       --pink-a: rgba(255,105,180,.92);
       --pink-b: rgba(128,20,80,1);
+
+      /* 新增：橙色模式按钮 */
+      --orange-a: rgba(255,171,64,.96);
+      --orange-b: rgba(245,124,0,1);
     }
 
     html{
@@ -175,6 +179,17 @@
       color: rgba(238,242,255,.92);
     }
 
+    /* 新增：提交下载任务按钮在“已选择”时变绿 */
+    .btn-picked{
+      background: linear-gradient(180deg, var(--pick-green-a), var(--pick-green-b)) !important;
+      border-color: var(--pick-green-border) !important;
+      box-shadow:
+        0 16px 24px rgba(0,0,0,.52),
+        inset 0 1px 0 rgba(255,255,255,.22),
+        inset 0 -16px 26px rgba(0,0,0,.40),
+        0 0 0 2px rgba(90,255,190,.18) !important;
+    }
+
     pre{
       white-space: pre-wrap;
       word-break: break-word;
@@ -273,17 +288,6 @@
     .c-skipped{ color: var(--skip); font-weight: 900; }
     .c-pending{ color: rgba(238,242,255,.60); font-weight: 800; }
 
-    .pill{
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      font-size:12px;
-      opacity:.95;
-      margin-left:6px;
-      background: rgba(255,255,255,.06);
-    }
-
     .toggle{
       display: inline-flex;
       align-items: center;
@@ -379,8 +383,9 @@
       box-shadow: var(--shadow2);
       user-select:none;
     }
+    /* 修改点 2：active 背景改橙色 */
     .modebtn.active{
-      background: var(--btn);
+      background: linear-gradient(180deg, var(--orange-a), var(--orange-b));
       border-color: rgba(255,255,255,.28);
       color: #fff;
     }
@@ -581,7 +586,8 @@
       <div id="steps" style="margin-top:12px;"></div>
 
       <div class="row-between" style="margin-top:14px;" id="artHeader">
-        <h3 style="margin:0;">Artifacts（构建工件）</h3>
+        <!-- 修改点 3：标题文案 -->
+        <h3 style="margin:0;">Artifacts（最终产物）</h3>
         <span class="muted" id="artNote">（下载完成后自动加载）</span>
       </div>
 
@@ -689,7 +695,6 @@
     }, delay);
   }
 
-  // 更精确：把某元素滚动到 viewport 中心
   function autoScrollToCenter(el, {delay=0} = {}){
     if(!el) return;
     if(inCooldown()) return;
@@ -718,7 +723,6 @@
     afterTwoFrames(()=> autoScrollTo($("debugArts"), {block:"start", delay: 0}));
   }
 
-  // 关键微调 1：滚到“视频表头”并居中
   function autoScrollVideoHeaderToCenter(){
     afterTwoFrames(()=>{
       const thead = $("videoTable")?.querySelector("thead");
@@ -892,10 +896,8 @@
     video_link: "",
     video_id: null,
     thumb_fallback: null,
-
     query: { request_id:null, run_id:null, html_url:null, formats:null, raw_formats_txt:null },
     download: { request_id:null, run_id:null, html_url:null, meta:null, artifacts:null, runInfo:null },
-
     pick: { mode:"va", video_id:null, audio_id:null, auto_audio_id:null, auto_audio_reason:"" }
   };
 
@@ -932,6 +934,9 @@
       $(id).style.pointerEvents = downloading ? "none" : "auto";
       $(id).style.opacity = downloading ? ".55" : "1";
     }
+
+    // phase 变化后也同步一次按钮颜色
+    syncDownloadButtonAccent();
   }
 
   function resetAllUI(){
@@ -968,6 +973,7 @@
 
     setMode("va");
     setPhase("idle");
+    syncDownloadButtonAccent();
   }
 
   function normNumber(x){
@@ -1101,6 +1107,7 @@
     if(mode === "va" && state.pick.video_id) computeAutoAudio();
 
     rerenderPickTables();
+    syncDownloadButtonAccent();
   }
 
   $("modeV").addEventListener("click", ()=> setMode("v"));
@@ -1194,6 +1201,7 @@
         if(state.pick.mode === "va") computeAutoAudio();
         updateModeNote();
         rerenderPickTables();
+        syncDownloadButtonAccent();
       });
     }
 
@@ -1205,6 +1213,7 @@
         state.pick.audio_id = id;
         updateModeNote();
         rerenderPickTables();
+        syncDownloadButtonAccent();
       });
     }
 
@@ -1214,6 +1223,8 @@
     } else {
       updateModeNote();
     }
+
+    syncDownloadButtonAccent();
   }
 
   function buildFormatSpecForDownload(){
@@ -1237,6 +1248,22 @@
 
     if(!state.pick.audio_id) return "bestaudio";
     return String(state.pick.audio_id);
+  }
+
+  // 修改点 1：按钮颜色跟随选择（绿 / 蓝）
+  function syncDownloadButtonAccent(){
+    const btn = $("btnDownload");
+    if(!btn) return;
+
+    const picked = (() => {
+      if(phase === "downloading") return false; // 下载中置灰即可，不强行绿色
+      const m = state.pick.mode;
+      if(m === "a") return !!state.pick.audio_id;
+      // v 或 va 都以 video_id 为“选择了流”的判定
+      return !!state.pick.video_id;
+    })();
+
+    btn.classList.toggle("btn-picked", picked);
   }
 
   function cleanFormatsTxt(txt){
@@ -1395,12 +1422,9 @@
     $("debugArts").classList.toggle("hide", !on);
 
     if(on){
-      // 微调 2：不等待网络，先立刻滚到底部（delay=0）
+      // 维持你之前“立即滚动”的体验
       autoScrollToDebugInstant();
-
       await renderDebugArtifactsPanel();
-
-      // 若确实有下载按钮且用户未介入，可再对齐一次（同样 delay=0）
       const hasLink = !!$("debugArtifacts").querySelector("a.dl-btn, a[data-dl='1']");
       if(hasLink && !inCooldown()){
         autoScrollToDebugInstant();
@@ -1492,6 +1516,7 @@
         $("status").textContent = "未找到 formats.json（当前 workflow 可能尚未升级）。请更新 ytdlp.yml 后再使用列表选择。";
         setPhase("queried");
         $("videoLink").disabled = false;
+        syncDownloadButtonAccent();
         return;
       }
 
@@ -1526,12 +1551,13 @@
         await renderDebugArtifactsPanel();
       }
 
-      // 微调 1：滚到“视频表头”并居中
       autoScrollVideoHeaderToCenter();
+      syncDownloadButtonAccent();
     } catch(err){
       $("status").textContent = "加载格式列表失败：" + String(err);
       setPhase("idle");
       $("videoLink").disabled = false;
+      syncDownloadButtonAccent();
     }
   }
 
@@ -1540,6 +1566,7 @@
       $("status").textContent = String(e);
       setPhase("idle");
       $("videoLink").disabled = false;
+      syncDownloadButtonAccent();
     }
   });
 
@@ -1579,6 +1606,7 @@
       $("status").textContent = "未能定位到下载 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
       setPhase("queried");
       setMode(state.pick.mode);
+      syncDownloadButtonAccent();
       return;
     }
 
@@ -1637,6 +1665,7 @@
 
     setPhase("queried");
     setMode(state.pick.mode);
+    syncDownloadButtonAccent();
   }
 
   $("btnDownload").addEventListener("click", async ()=>{
@@ -1644,6 +1673,7 @@
       $("status").textContent = "提交/运行下载失败：" + String(e);
       setPhase("queried");
       setMode(state.pick.mode);
+      syncDownloadButtonAccent();
     }
   });
 
