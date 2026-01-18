@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v2.2_autoScroll_pinkFormatsHeader_userInterruptSafe -->
+<!-- VERSION: PANEL_UI_v2.2.1_scrollVideoHeaderCenter_debugInstantScroll -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -240,7 +240,6 @@
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
 
-    /* 需求 5：粉红色表头 */
     .thead-formats th{
       background: linear-gradient(180deg, var(--pink-a), var(--pink-b));
     }
@@ -669,7 +668,7 @@
     requestAnimationFrame(()=> requestAnimationFrame(fn));
   }
 
-  function autoScrollTo(el, {block="start", delay=120, reason=""} = {}){
+  function autoScrollTo(el, {block="start", delay=120} = {}){
     if(!el) return;
     if(inCooldown()) return;
 
@@ -684,24 +683,51 @@
       try{
         el.scrollIntoView({ behavior: "smooth", block });
       } catch {
-        // fallback
         const top = el.getBoundingClientRect().top + window.scrollY - 10;
-        window.scrollTo({ top, behavior: "smooth" });
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
       }
     }, delay);
   }
 
-  function autoScrollToRunCard(reason){
-    afterTwoFrames(()=> autoScrollTo($("runCard"), {block:"start", delay: 120, reason}));
+  // 更精确：把某元素滚动到 viewport 中心
+  function autoScrollToCenter(el, {delay=0} = {}){
+    if(!el) return;
+    if(inCooldown()) return;
+
+    scrollCtl.token++;
+    const myToken = scrollCtl.token;
+    if(scrollCtl.timer) clearTimeout(scrollCtl.timer);
+
+    scrollCtl.timer = setTimeout(()=>{
+      if(myToken !== scrollCtl.token) return;
+      if(inCooldown()) return;
+
+      const r = el.getBoundingClientRect();
+      const targetTop = window.scrollY + r.top + (r.height/2) - (window.innerHeight/2);
+      window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    }, delay);
   }
-  function autoScrollToVideoPanel(reason){
-    afterTwoFrames(()=> autoScrollTo($("videoPanel"), {block:"start", delay: 120, reason}));
+
+  function autoScrollToRunCard(){
+    afterTwoFrames(()=> autoScrollTo($("runCard"), {block:"start", delay: 120}));
   }
-  function autoScrollToArtifacts(reason){
-    afterTwoFrames(()=> autoScrollTo($("artHeader"), {block:"start", delay: 120, reason}));
+  function autoScrollToArtifacts(){
+    afterTwoFrames(()=> autoScrollTo($("artHeader"), {block:"start", delay: 120}));
   }
-  function autoScrollToDebug(reason){
-    afterTwoFrames(()=> autoScrollTo($("debugArts"), {block:"start", delay: 120, reason}));
+  function autoScrollToDebugInstant(){
+    afterTwoFrames(()=> autoScrollTo($("debugArts"), {block:"start", delay: 0}));
+  }
+
+  // 关键微调 1：滚到“视频表头”并居中
+  function autoScrollVideoHeaderToCenter(){
+    afterTwoFrames(()=>{
+      const thead = $("videoTable")?.querySelector("thead");
+      if(thead){
+        autoScrollToCenter(thead, { delay: 0 });
+      } else {
+        autoScrollTo($("videoPanel"), { block:"start", delay: 0 });
+      }
+    });
   }
 
   function parseYouTubeId(input){
@@ -860,37 +886,17 @@
     box.style.display = "block";
   }
 
-  let phase = "idle"; // idle | querying | queried | downloading
+  let phase = "idle";
 
   const state = {
     video_link: "",
     video_id: null,
     thumb_fallback: null,
 
-    query: {
-      request_id: null,
-      run_id: null,
-      html_url: null,
-      formats: null,
-      raw_formats_txt: null,
-    },
+    query: { request_id:null, run_id:null, html_url:null, formats:null, raw_formats_txt:null },
+    download: { request_id:null, run_id:null, html_url:null, meta:null, artifacts:null, runInfo:null },
 
-    download: {
-      request_id: null,
-      run_id: null,
-      html_url: null,
-      meta: null,
-      artifacts: null,
-      runInfo: null,
-    },
-
-    pick: {
-      mode: "va", // va | v | a
-      video_id: null,
-      audio_id: null,
-      auto_audio_id: null,
-      auto_audio_reason: "",
-    }
+    pick: { mode:"va", video_id:null, audio_id:null, auto_audio_id:null, auto_audio_reason:"" }
   };
 
   function setPanelDisabled(id, disabled){
@@ -1387,11 +1393,18 @@
   $("showDebugArts").addEventListener("change", async ()=>{
     const on = $("showDebugArts").checked;
     $("debugArts").classList.toggle("hide", !on);
+
     if(on){
+      // 微调 2：不等待网络，先立刻滚到底部（delay=0）
+      autoScrollToDebugInstant();
+
       await renderDebugArtifactsPanel();
-      // 需求 3：如果有工件（有下载按钮），滚到调试区
+
+      // 若确实有下载按钮且用户未介入，可再对齐一次（同样 delay=0）
       const hasLink = !!$("debugArtifacts").querySelector("a.dl-btn, a[data-dl='1']");
-      if(hasLink) autoScrollToDebug("showDebugArts");
+      if(hasLink && !inCooldown()){
+        autoScrollToDebugInstant();
+      }
     }
   });
 
@@ -1412,8 +1425,7 @@
     $("status").textContent = "正在触发查询工作流...";
     $("videoLink").disabled = true;
 
-    // 需求 1：点击解析后自动滚动到运行信息
-    autoScrollToRunCard("query-start");
+    autoScrollToRunCard();
 
     const request_id = uuid();
     state.query.request_id = request_id;
@@ -1442,8 +1454,7 @@
     state.query.html_url = run.html_url;
     renderRunMeta();
 
-    // 可选：定位到 run 后再滚一次（如果用户没打断）
-    autoScrollToRunCard("query-resolved");
+    autoScrollToRunCard();
 
     $("status").textContent = "查询运行中...";
     await pollRunToEnd(run.id, (runInfo, jobs)=>{
@@ -1515,8 +1526,8 @@
         await renderDebugArtifactsPanel();
       }
 
-      // 需求 1：步骤完成并且格式表渲染后滚回视频表
-      autoScrollToVideoPanel("query-done");
+      // 微调 1：滚到“视频表头”并居中
+      autoScrollVideoHeaderToCenter();
     } catch(err){
       $("status").textContent = "加载格式列表失败：" + String(err);
       setPhase("idle");
@@ -1543,9 +1554,7 @@
     setPanelDisabled("audioPanel", true);
 
     $("status").textContent = "正在触发下载工作流...";
-
-    // 需求 2：提交下载后滚到运行信息
-    autoScrollToRunCard("download-start");
+    autoScrollToRunCard();
 
     const req = uuid();
     state.download.request_id = req;
@@ -1577,7 +1586,7 @@
     state.download.html_url = run.html_url;
     renderRunMeta();
 
-    autoScrollToRunCard("download-resolved");
+    autoScrollToRunCard();
 
     $("status").textContent = `下载运行中（fmt=${formatSpec}）...`;
 
@@ -1614,8 +1623,7 @@
         await renderDebugArtifactsPanel();
       }
 
-      // 需求 2：全部完成后滚到 Artifacts 区
-      autoScrollToArtifacts("download-done");
+      autoScrollToArtifacts();
     } catch(e){
       $("artNote").textContent = "加载 artifacts 失败：" + String(e);
     }
