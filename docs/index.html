@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v2.1_stackTables_modeMutualDisable_pickedGreen_formatsHeadRed_notesWithId_hideMetaInMainArtifacts_minDim720Guard -->
+<!-- VERSION: PANEL_UI_v2.2_autoScroll_pinkFormatsHeader_userInterruptSafe -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -65,6 +65,9 @@
       --pick-green-a: rgba(32,195,96,.92);
       --pick-green-b: rgba(18,118,62,.95);
       --pick-green-border: rgba(150,255,210,.55);
+
+      --pink-a: rgba(255,105,180,.92);
+      --pink-b: rgba(128,20,80,1);
     }
 
     html{
@@ -237,9 +240,9 @@
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
 
-    /* 修复点 4：formats 表头改红色 */
+    /* 需求 5：粉红色表头 */
     .thead-formats th{
-      background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
+      background: linear-gradient(180deg, var(--pink-a), var(--pink-b));
     }
 
     .thead-arts th{
@@ -363,7 +366,6 @@
     }
     .dl-btn:active{ transform: translateY(1px); }
 
-    /* 模式按钮组 */
     .modebar{
       display:flex; gap:10px; flex-wrap:wrap;
       margin: 10px 0 8px;
@@ -384,12 +386,10 @@
       color: #fff;
     }
 
-    /* 可选择行 */
     .pick-row{ cursor: pointer; }
     .pick-row td{ transition: transform .06s ease, filter .12s ease; }
     .pick-row:active td{ transform: translateY(1px); }
 
-    /* 修复点 3：选中行整行键帽变绿 */
     tr.picked td{
       background:
         radial-gradient(180px 120px at 18% 14%, rgba(255,255,255,.18), transparent 60%),
@@ -403,7 +403,6 @@
       filter: saturate(1.05) brightness(1.05);
     }
 
-    /* 面板置灰（模式互斥） */
     .panel-disabled{
       opacity: .58;
       filter: grayscale(.10);
@@ -411,7 +410,6 @@
     }
     .panel-disabled .muted{ opacity: .95; }
 
-    /* 下载中锁定 */
     .disabled-zone{
       position: relative;
       opacity: .60;
@@ -432,7 +430,6 @@
       pointer-events: none;
     }
 
-    /* 修复点 1：上下堆叠，不再左右两列 */
     .stack{
       display: grid;
       grid-template-columns: 1fr;
@@ -470,7 +467,7 @@
 
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="topCard">
       <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
       <div class="muted">流程：粘贴链接 → 解析/查询格式 → 选择 → 提交下载 → 下载 artifact</div>
       <hr>
@@ -491,7 +488,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
+    <div class="card" style="margin-top:14px;" id="formatsCard">
       <div class="row-between">
         <h3 style="margin:0;">格式列表（720p+ / 音频100kbps+）</h3>
         <div class="row">
@@ -544,7 +541,6 @@
         <hr style="margin-top:14px;">
 
         <div id="pickArea">
-          <!-- 修复点 1：上下堆叠 -->
           <div class="stack">
             <div id="videoPanel">
               <div class="row-between">
@@ -577,7 +573,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
+    <div class="card" style="margin-top:14px;" id="runCard">
       <div class="row-between">
         <div><b>运行信息</b></div>
         <div class="muted" id="runMeta"></div>
@@ -585,7 +581,7 @@
 
       <div id="steps" style="margin-top:12px;"></div>
 
-      <div class="row-between" style="margin-top:14px;">
+      <div class="row-between" style="margin-top:14px;" id="artHeader">
         <h3 style="margin:0;">Artifacts（构建工件）</h3>
         <span class="muted" id="artNote">（下载完成后自动加载）</span>
       </div>
@@ -645,6 +641,68 @@
     if (!runId || !artName) return;
     a.href = buildArtifactZipUrl(runId, artName, prefix);
   }, { capture: true });
+
+  // ========= 自动滚动控制器（可被用户手动打断） =========
+  const scrollCtl = {
+    userInteractedAt: 0,
+    cooldownMs: 1200,
+    timer: null,
+    token: 0,
+  };
+
+  function markUserInteracted(){
+    scrollCtl.userInteractedAt = Date.now();
+    if(scrollCtl.timer) clearTimeout(scrollCtl.timer);
+    scrollCtl.timer = null;
+    scrollCtl.token++;
+  }
+
+  for(const ev of ["wheel","touchstart","touchmove","mousedown","keydown"]){
+    window.addEventListener(ev, markUserInteracted, { passive: true, capture: true });
+  }
+
+  function inCooldown(){
+    return (Date.now() - scrollCtl.userInteractedAt) < scrollCtl.cooldownMs;
+  }
+
+  function afterTwoFrames(fn){
+    requestAnimationFrame(()=> requestAnimationFrame(fn));
+  }
+
+  function autoScrollTo(el, {block="start", delay=120, reason=""} = {}){
+    if(!el) return;
+    if(inCooldown()) return;
+
+    scrollCtl.token++;
+    const myToken = scrollCtl.token;
+    if(scrollCtl.timer) clearTimeout(scrollCtl.timer);
+
+    scrollCtl.timer = setTimeout(()=>{
+      if(myToken !== scrollCtl.token) return;
+      if(inCooldown()) return;
+
+      try{
+        el.scrollIntoView({ behavior: "smooth", block });
+      } catch {
+        // fallback
+        const top = el.getBoundingClientRect().top + window.scrollY - 10;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }, delay);
+  }
+
+  function autoScrollToRunCard(reason){
+    afterTwoFrames(()=> autoScrollTo($("runCard"), {block:"start", delay: 120, reason}));
+  }
+  function autoScrollToVideoPanel(reason){
+    afterTwoFrames(()=> autoScrollTo($("videoPanel"), {block:"start", delay: 120, reason}));
+  }
+  function autoScrollToArtifacts(reason){
+    afterTwoFrames(()=> autoScrollTo($("artHeader"), {block:"start", delay: 120, reason}));
+  }
+  function autoScrollToDebug(reason){
+    afterTwoFrames(()=> autoScrollTo($("debugArts"), {block:"start", delay: 120, reason}));
+  }
 
   function parseYouTubeId(input){
     try{
@@ -802,7 +860,6 @@
     box.style.display = "block";
   }
 
-  // ====== 运行状态（两段式） ======
   let phase = "idle"; // idle | querying | queried | downloading
 
   const state = {
@@ -907,52 +964,6 @@
     setPhase("idle");
   }
 
-  function setMode(mode){
-    state.pick.mode = mode;
-    $("modeV").classList.toggle("active", mode==="v");
-    $("modeA").classList.toggle("active", mode==="a");
-    $("modeVA").classList.toggle("active", mode==="va");
-
-    // 清理互斥选择
-    if(mode === "a"){
-      state.pick.video_id = null;
-      state.pick.auto_audio_id = null;
-      state.pick.auto_audio_reason = "";
-    } else if(mode === "v"){
-      state.pick.audio_id = null;
-      state.pick.auto_audio_id = null;
-      state.pick.auto_audio_reason = "";
-    } else { // va
-      state.pick.audio_id = null;
-    }
-
-    // 修复点 2：模式互斥禁用（a 禁用视频表；v/va 禁用音频表）
-    const downloading = (phase === "downloading");
-    setPanelDisabled("videoPanel", mode === "a" || downloading);
-    setPanelDisabled("audioPanel", mode !== "a" || downloading);
-
-    // 在 va 模式下，如果已有视频选择，重新计算自动音频
-    if(mode === "va" && state.pick.video_id) computeAutoAudio();
-
-    rerenderPickTables();
-  }
-
-  $("modeV").addEventListener("click", ()=> setMode("v"));
-  $("modeA").addEventListener("click", ()=> setMode("a"));
-  $("modeVA").addEventListener("click", ()=> setMode("va"));
-
-  $("enableSections").addEventListener("change", ()=> setPhase(phase));
-  $("videoLink").addEventListener("input", ()=>{
-    const v = String($("videoLink").value||"").trim();
-    $("btnQuery").disabled = (phase==="querying" || phase==="downloading") || !v;
-  });
-
-  $("btnReset").addEventListener("click", ()=>{
-    if(phase==="querying" || phase==="downloading") return;
-    $("videoLink").value = "";
-    resetAllUI();
-  });
-
   function normNumber(x){
     if(x == null) return null;
     const n = Number(x);
@@ -980,6 +991,44 @@
     });
     const best = arr[0] || null;
     return { a: best, reason: best ? `选择最高码率音频 ${best.format_id}` : "未找到可用音频" };
+  }
+
+  function updateModeNote(){
+    const mode = state.pick.mode;
+
+    if(mode === "va"){
+      if(!state.pick.video_id){
+        $("autoPickNote").textContent = "模式：下载视频 + 音频（请选择一个视频流；未选择时默认 bestvideo+bestaudio）";
+        return;
+      }
+      const vId = state.pick.video_id;
+      if(state.pick.auto_audio_reason && !state.pick.auto_audio_id){
+        $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流；${state.pick.auto_audio_reason}）`;
+        return;
+      }
+      if(state.pick.auto_audio_id){
+        $("autoPickNote").textContent =
+          `模式：下载视频 + 音频（您选择了 ${vId} 流；自动搭配音频：${state.pick.auto_audio_id}，${state.pick.auto_audio_reason}）`;
+        return;
+      }
+      $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流）`;
+      return;
+    }
+
+    if(mode === "v"){
+      if(state.pick.video_id){
+        $("autoPickNote").textContent = `模式：只下载视频（您的选择是 ${state.pick.video_id} 流）`;
+      } else {
+        $("autoPickNote").textContent = "模式：只下载视频（请选择一个视频流；未选择时默认 bestvideo）";
+      }
+      return;
+    }
+
+    if(state.pick.audio_id){
+      $("autoPickNote").textContent = `模式：只下载音频（您的选择是 ${state.pick.audio_id} 流）`;
+    } else {
+      $("autoPickNote").textContent = "模式：只下载音频（请选择一个音频流；未选择时默认 bestaudio）";
+    }
   }
 
   function computeAutoAudio(){
@@ -1021,45 +1070,48 @@
     updateModeNote();
   }
 
-  function updateModeNote(){
-    const mode = state.pick.mode;
+  function setMode(mode){
+    state.pick.mode = mode;
+    $("modeV").classList.toggle("active", mode==="v");
+    $("modeA").classList.toggle("active", mode==="a");
+    $("modeVA").classList.toggle("active", mode==="va");
 
-    if(mode === "va"){
-      if(!state.pick.video_id){
-        $("autoPickNote").textContent = "模式：下载视频 + 音频（请选择一个视频流；未选择时默认 bestvideo+bestaudio）";
-        return;
-      }
-      // 有 video 选择
-      const vId = state.pick.video_id;
-      if(state.pick.auto_audio_reason && !state.pick.auto_audio_id){
-        $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流；${state.pick.auto_audio_reason}）`;
-        return;
-      }
-      if(state.pick.auto_audio_id){
-        $("autoPickNote").textContent =
-          `模式：下载视频 + 音频（您选择了 ${vId} 流；自动搭配音频：${state.pick.auto_audio_id}，${state.pick.auto_audio_reason}）`;
-        return;
-      }
-      $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流）`;
-      return;
-    }
-
-    if(mode === "v"){
-      if(state.pick.video_id){
-        $("autoPickNote").textContent = `模式：只下载视频（您的选择是 ${state.pick.video_id} 流）`;
-      } else {
-        $("autoPickNote").textContent = "模式：只下载视频（请选择一个视频流；未选择时默认 bestvideo）";
-      }
-      return;
-    }
-
-    // mode === "a"
-    if(state.pick.audio_id){
-      $("autoPickNote").textContent = `模式：只下载音频（您的选择是 ${state.pick.audio_id} 流）`;
+    if(mode === "a"){
+      state.pick.video_id = null;
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "";
+    } else if(mode === "v"){
+      state.pick.audio_id = null;
+      state.pick.auto_audio_id = null;
+      state.pick.auto_audio_reason = "";
     } else {
-      $("autoPickNote").textContent = "模式：只下载音频（请选择一个音频流；未选择时默认 bestaudio）";
+      state.pick.audio_id = null;
     }
+
+    const downloading = (phase === "downloading");
+    setPanelDisabled("videoPanel", mode === "a" || downloading);
+    setPanelDisabled("audioPanel", mode !== "a" || downloading);
+
+    if(mode === "va" && state.pick.video_id) computeAutoAudio();
+
+    rerenderPickTables();
   }
+
+  $("modeV").addEventListener("click", ()=> setMode("v"));
+  $("modeA").addEventListener("click", ()=> setMode("a"));
+  $("modeVA").addEventListener("click", ()=> setMode("va"));
+
+  $("enableSections").addEventListener("change", ()=> setPhase(phase));
+  $("videoLink").addEventListener("input", ()=>{
+    const v = String($("videoLink").value||"").trim();
+    $("btnQuery").disabled = (phase==="querying" || phase==="downloading") || !v;
+  });
+
+  $("btnReset").addEventListener("click", ()=>{
+    if(phase==="querying" || phase==="downloading") return;
+    $("videoLink").value = "";
+    resetAllUI();
+  });
 
   function renderFormatsTable(type, rows, pickedId){
     const isVideo = (type === "video");
@@ -1127,11 +1179,10 @@
     $("videoTable").innerHTML = renderFormatsTable("video", vids, state.pick.video_id);
     $("audioTable").innerHTML = renderFormatsTable("audio", auds, state.pick.audio_id);
 
-    // attach click handlers
     for(const tr of $("videoTable").querySelectorAll("tr.pick-row")){
       tr.addEventListener("click", ()=>{
         if(phase === "downloading") return;
-        if(state.pick.mode === "a") return; // 只音频时禁用视频选择
+        if(state.pick.mode === "a") return;
         const id = tr.dataset.id;
         state.pick.video_id = id;
         if(state.pick.mode === "va") computeAutoAudio();
@@ -1143,7 +1194,7 @@
     for(const tr of $("audioTable").querySelectorAll("tr.pick-row")){
       tr.addEventListener("click", ()=>{
         if(phase === "downloading") return;
-        if(state.pick.mode !== "a") return; // 仅音频模式可选
+        if(state.pick.mode !== "a") return;
         const id = tr.dataset.id;
         state.pick.audio_id = id;
         updateModeNote();
@@ -1151,7 +1202,6 @@
       });
     }
 
-    // 每次渲染后刷新提示
     if(state.pick.mode === "va"){
       if(state.pick.video_id) computeAutoAudio();
       else updateModeNote();
@@ -1191,7 +1241,6 @@
     return lines.slice(idx).join("\n").trim();
   }
 
-  // ====== 运行调度 ======
   async function dispatchWorkflow(inputs){
     return await postJSON("/dispatch", { ref: "main", inputs });
   }
@@ -1232,14 +1281,6 @@
     $("runMeta").innerHTML = html || "";
   }
 
-  $("showDebugArts").addEventListener("change", ()=>{
-    $("debugArts").classList.toggle("hide", !$("showDebugArts").checked);
-    if($("showDebugArts").checked){
-      renderDebugArtifactsPanel();
-    }
-  });
-
-  /* 修复点 二：主 Artifacts 表格永远只显示成品 downloaded-videos-*（不随 debug 开关变化） */
   function renderArtifactsTable(runId, artifactsJson){
     const artsAll = artifactsJson.artifacts || [];
     const arts = artsAll.filter(a => String(a.name || "").startsWith("downloaded-videos-"));
@@ -1291,7 +1332,6 @@
   async function renderDebugArtifactsPanel(){
     const parts = [];
 
-    // query
     if(state.query.run_id && state.query.request_id){
       try{
         const arts = await fetchJSON(`/artifacts?run_id=${state.query.run_id}`);
@@ -1313,7 +1353,6 @@
       }
     }
 
-    // download meta（修复点：文案改为“meta 工件”）
     if(state.download.run_id && state.download.request_id){
       try{
         const arts = state.download.artifacts || await fetchJSON(`/artifacts?run_id=${state.download.run_id}`);
@@ -1337,17 +1376,25 @@
   }
 
   function minDim720Guard(v){
-    // 前端二次保险：过滤掉 480x854 这类“高度>720但短边<720”的竖屏低清
     const w = normNumber(v.width);
     const h = normNumber(v.height);
     if(w != null && h != null){
       return Math.min(w, h) >= 720;
     }
-    // 缺字段时退回原过滤：height>=720
     return (h != null ? h >= 720 : true);
   }
 
-  // ====== 主流程：查询 ======
+  $("showDebugArts").addEventListener("change", async ()=>{
+    const on = $("showDebugArts").checked;
+    $("debugArts").classList.toggle("hide", !on);
+    if(on){
+      await renderDebugArtifactsPanel();
+      // 需求 3：如果有工件（有下载按钮），滚到调试区
+      const hasLink = !!$("debugArtifacts").querySelector("a.dl-btn, a[data-dl='1']");
+      if(hasLink) autoScrollToDebug("showDebugArts");
+    }
+  });
+
   async function doQuery(){
     const link = String($("videoLink").value||"").trim();
     if(!link) return;
@@ -1364,6 +1411,9 @@
     setPhase("querying");
     $("status").textContent = "正在触发查询工作流...";
     $("videoLink").disabled = true;
+
+    // 需求 1：点击解析后自动滚动到运行信息
+    autoScrollToRunCard("query-start");
 
     const request_id = uuid();
     state.query.request_id = request_id;
@@ -1391,6 +1441,9 @@
     state.query.run_id = run.id;
     state.query.html_url = run.html_url;
     renderRunMeta();
+
+    // 可选：定位到 run 后再滚一次（如果用户没打断）
+    autoScrollToRunCard("query-resolved");
 
     $("status").textContent = "查询运行中...";
     await pollRunToEnd(run.id, (runInfo, jobs)=>{
@@ -1435,7 +1488,6 @@
       let vids = formatsObj.videos || [];
       const auds = formatsObj.audios || [];
 
-      // 修复点 6（二次保险）：过滤掉 min(width,height)<720 的竖屏低清（如 480x854 -> 854p）
       vids = vids.filter(minDim720Guard);
 
       state.query.formats = { video: videoMeta, videos: vids, audios: auds };
@@ -1451,7 +1503,6 @@
       $("formatsZone").classList.remove("hide");
       $("formatsTxtBox").classList.add("hide");
 
-      // 默认模式 va，且此时不在下载中
       setMode("va");
       rerenderPickTables();
 
@@ -1460,7 +1511,12 @@
       setPhase("queried");
       $("videoLink").disabled = false;
 
-      if($("showDebugArts").checked) renderDebugArtifactsPanel();
+      if($("showDebugArts").checked){
+        await renderDebugArtifactsPanel();
+      }
+
+      // 需求 1：步骤完成并且格式表渲染后滚回视频表
+      autoScrollToVideoPanel("query-done");
     } catch(err){
       $("status").textContent = "加载格式列表失败：" + String(err);
       setPhase("idle");
@@ -1476,7 +1532,6 @@
     }
   });
 
-  // ====== 主流程：下载 ======
   async function doDownload(){
     if(!state.query.formats){
       alert("请先解析/查询，获得格式列表后再下载");
@@ -1484,11 +1539,13 @@
     }
 
     setPhase("downloading");
-    // 下载中，保持互斥置灰
     setPanelDisabled("videoPanel", true);
     setPanelDisabled("audioPanel", true);
 
     $("status").textContent = "正在触发下载工作流...";
+
+    // 需求 2：提交下载后滚到运行信息
+    autoScrollToRunCard("download-start");
 
     const req = uuid();
     state.download.request_id = req;
@@ -1519,6 +1576,8 @@
     state.download.run_id = run.id;
     state.download.html_url = run.html_url;
     renderRunMeta();
+
+    autoScrollToRunCard("download-resolved");
 
     $("status").textContent = `下载运行中（fmt=${formatSpec}）...`;
 
@@ -1551,7 +1610,12 @@
       $("artifacts").innerHTML = renderArtifactsTable(state.download.run_id, arts);
       $("artNote").textContent = `共 ${arts.total_count ?? (arts.artifacts||[]).length} 个 artifacts`;
 
-      if($("showDebugArts").checked) renderDebugArtifactsPanel();
+      if($("showDebugArts").checked){
+        await renderDebugArtifactsPanel();
+      }
+
+      // 需求 2：全部完成后滚到 Artifacts 区
+      autoScrollToArtifacts("download-done");
     } catch(e){
       $("artNote").textContent = "加载 artifacts 失败：" + String(e);
     }
@@ -1564,7 +1628,6 @@
     }
 
     setPhase("queried");
-    // 恢复互斥状态（按当前 mode）
     setMode(state.pick.mode);
   }
 
