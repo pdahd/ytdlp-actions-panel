@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSION: PANEL_UI_v2.0_twoStageQuery_formatsJson_modeSelect_singlePick_lockDuringDownload_debugArtifactsToggle -->
+<!-- VERSION: PANEL_UI_v2.1_stackTables_modeMutualDisable_pickedGreen_formatsHeadRed_notesWithId_hideMetaInMainArtifacts_minDim720Guard -->
 <html lang="zh">
 <head>
   <meta charset="utf-8" />
@@ -29,7 +29,6 @@
       --link: #a9baff;
       --btn: linear-gradient(180deg, #5f7cff 0%, #3f60ff 100%);
       --btn-ghost: rgba(255,255,255,.06);
-      --btn-border: rgba(255,255,255,.22);
 
       --shadow: 0 18px 45px rgba(0,0,0,.45);
       --shadow2: 0 10px 25px rgba(0,0,0,.35);
@@ -62,6 +61,10 @@
       --paper-a: #f3e8b0;
       --paper-b: #d8c77a;
       --paper-c: #b59b45;
+
+      --pick-green-a: rgba(32,195,96,.92);
+      --pick-green-b: rgba(18,118,62,.95);
+      --pick-green-border: rgba(150,255,210,.55);
     }
 
     html{
@@ -106,7 +109,6 @@
       box-shadow: var(--shadow);
       padding: 18px;
       overflow: hidden;
-
       backdrop-filter: blur(10px) saturate(140%);
       -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
@@ -234,9 +236,12 @@
     .thead-runs th{
       background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
+
+    /* 修复点 4：formats 表头改红色 */
     .thead-formats th{
-      background: linear-gradient(180deg, rgba(60,120,255,.80), rgba(16,34,72,1));
+      background: linear-gradient(180deg, rgba(196,72,58,.92), rgba(78,20,16,1));
     }
+
     .thead-arts th{
       background: linear-gradient(180deg, rgba(165,110,255,.78), rgba(25,33,64,1));
     }
@@ -383,13 +388,30 @@
     .pick-row{ cursor: pointer; }
     .pick-row td{ transition: transform .06s ease, filter .12s ease; }
     .pick-row:active td{ transform: translateY(1px); }
-    .picked td{
-      outline: 2px solid rgba(120,160,255,.75);
-      outline-offset: -2px;
-      filter: brightness(1.06);
+
+    /* 修复点 3：选中行整行键帽变绿 */
+    tr.picked td{
+      background:
+        radial-gradient(180px 120px at 18% 14%, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(180deg, var(--pick-green-a), var(--pick-green-b)) !important;
+      border-color: var(--pick-green-border) !important;
+      box-shadow:
+        0 16px 24px rgba(0,0,0,.52),
+        inset 0 1px 0 rgba(255,255,255,.22),
+        inset 0 -16px 26px rgba(0,0,0,.40),
+        0 0 0 2px rgba(90,255,190,.18) !important;
+      filter: saturate(1.05) brightness(1.05);
     }
 
-    /* 置灰不可操作（下载中） */
+    /* 面板置灰（模式互斥） */
+    .panel-disabled{
+      opacity: .58;
+      filter: grayscale(.10);
+      pointer-events: none;
+    }
+    .panel-disabled .muted{ opacity: .95; }
+
+    /* 下载中锁定 */
     .disabled-zone{
       position: relative;
       opacity: .60;
@@ -410,9 +432,10 @@
       pointer-events: none;
     }
 
-    .subgrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
+    /* 修复点 1：上下堆叠，不再左右两列 */
+    .stack{
+      display: grid;
+      grid-template-columns: 1fr;
       gap: var(--gap);
       align-items: start;
     }
@@ -425,9 +448,6 @@
       margin-top: 10px;
     }
 
-    @media (max-width: 900px){
-      .subgrid{ grid-template-columns: 1fr; }
-    }
     @media (max-width: 720px){
       .wrap{ padding: 0 12px; }
       table.tbl{ min-width: 720px; border-spacing: 7px; }
@@ -450,7 +470,6 @@
 
 <body>
   <div class="wrap">
-    <!-- 顶部：输入链接 + 解析按钮 -->
     <div class="card">
       <h2 style="margin:0 0 8px;">yt-dlp Actions 控制台</h2>
       <div class="muted">流程：粘贴链接 → 解析/查询格式 → 选择 → 提交下载 → 下载 artifact</div>
@@ -472,7 +491,6 @@
       </div>
     </div>
 
-    <!-- 格式列表（放在运行信息上方） -->
     <div class="card" style="margin-top:14px;">
       <div class="row-between">
         <h3 style="margin:0;">格式列表（720p+ / 音频100kbps+）</h3>
@@ -497,7 +515,6 @@
 
         <div class="muted" id="autoPickNote"></div>
 
-        <!-- 时间段（必须查询后才允许输入） -->
         <div class="time-grid">
           <div>
             <label>启用指定时间段</label>
@@ -527,8 +544,9 @@
         <hr style="margin-top:14px;">
 
         <div id="pickArea">
-          <div class="subgrid">
-            <div>
+          <!-- 修复点 1：上下堆叠 -->
+          <div class="stack">
+            <div id="videoPanel">
               <div class="row-between">
                 <b>视频流（单选）</b>
                 <span class="muted" id="videoCount"></span>
@@ -549,7 +567,6 @@
           </div>
         </div>
 
-        <!-- 如果 formats.json 不存在，临时显示 formats.txt（调试） -->
         <div id="formatsTxtBox" class="hide" style="margin-top:14px;">
           <div class="row-between">
             <b>原始 formats.txt（临时展示）</b>
@@ -560,7 +577,6 @@
       </div>
     </div>
 
-    <!-- 运行信息 + 步骤 + artifacts -->
     <div class="card" style="margin-top:14px;">
       <div class="row-between">
         <div><b>运行信息</b></div>
@@ -798,7 +814,7 @@
       request_id: null,
       run_id: null,
       html_url: null,
-      formats: null, // {video:{}, videos:[], audios:[]}
+      formats: null,
       raw_formats_txt: null,
     },
 
@@ -813,12 +829,18 @@
 
     pick: {
       mode: "va", // va | v | a
-      video_id: null, // selected video format_id
-      audio_id: null, // selected audio format_id (only for mode a)
+      video_id: null,
+      audio_id: null,
       auto_audio_id: null,
       auto_audio_reason: "",
     }
   };
+
+  function setPanelDisabled(id, disabled){
+    const el = $(id);
+    if(!el) return;
+    el.classList.toggle("panel-disabled", !!disabled);
+  }
 
   function setPhase(p){
     phase = p;
@@ -830,14 +852,11 @@
     $("btnQuery").disabled = busy || !String($("videoLink").value || "").trim();
     $("btnReset").disabled = busy;
 
-    // formats zone visibility
     $("formatsZone").classList.toggle("hide", !queried);
     $("formatsHint").classList.toggle("hide", queried);
 
-    // lock pick area during download
     $("pickArea").classList.toggle("disabled-zone", downloading);
 
-    // time inputs: only after queried; and start/end depends on enableSections
     $("enableSections").disabled = !queried || downloading;
     const en = $("enableSections").value === "是";
     $("startTime").disabled = !queried || downloading || !en;
@@ -846,7 +865,6 @@
     $("btnDownload").disabled = !queried || downloading;
     $("downloadTip").textContent = downloading ? "（下载任务运行中，等待完成后可再次选择）" : "";
 
-    // mode buttons disabled during download
     for(const id of ["modeV","modeA","modeVA"]) {
       $(id).style.pointerEvents = downloading ? "none" : "auto";
       $(id).style.opacity = downloading ? ".55" : "1";
@@ -885,7 +903,6 @@
     $("endTime").value = "";
     renderVideoMeta(null);
 
-    // mode default
     setMode("va");
     setPhase("idle");
   }
@@ -896,23 +913,7 @@
     $("modeA").classList.toggle("active", mode==="a");
     $("modeVA").classList.toggle("active", mode==="va");
 
-    // audio panel lock in va mode
-    const audioPanel = $("audioPanel");
-    if(mode === "va"){
-      audioPanel.style.opacity = ".62";
-      audioPanel.style.filter = "grayscale(.08)";
-      audioPanel.style.pointerEvents = "none";
-    } else if(mode === "v"){
-      audioPanel.style.opacity = ".62";
-      audioPanel.style.filter = "grayscale(.08)";
-      audioPanel.style.pointerEvents = "none";
-    } else {
-      audioPanel.style.opacity = "1";
-      audioPanel.style.filter = "none";
-      audioPanel.style.pointerEvents = "auto";
-    }
-
-    // clear incompatible picks
+    // 清理互斥选择
     if(mode === "a"){
       state.pick.video_id = null;
       state.pick.auto_audio_id = null;
@@ -922,10 +923,16 @@
       state.pick.auto_audio_id = null;
       state.pick.auto_audio_reason = "";
     } else { // va
-      state.pick.audio_id = null; // manual audio selection forbidden
-      // keep selected video if any, then re-compute auto audio
-      if(state.pick.video_id) computeAutoAudio();
+      state.pick.audio_id = null;
     }
+
+    // 修复点 2：模式互斥禁用（a 禁用视频表；v/va 禁用音频表）
+    const downloading = (phase === "downloading");
+    setPanelDisabled("videoPanel", mode === "a" || downloading);
+    setPanelDisabled("audioPanel", mode !== "a" || downloading);
+
+    // 在 va 模式下，如果已有视频选择，重新计算自动音频
+    if(mode === "va" && state.pick.video_id) computeAutoAudio();
 
     rerenderPickTables();
   }
@@ -946,7 +953,6 @@
     resetAllUI();
   });
 
-  // ====== formats 渲染与选择 ======
   function normNumber(x){
     if(x == null) return null;
     const n = Number(x);
@@ -960,12 +966,10 @@
 
   function pickBestAudio(audios, preferredId){
     const arr = Array.isArray(audios) ? audios.slice() : [];
-    // prefer exact ID if exists
     if(preferredId){
       const hit = arr.find(a => String(a.format_id) === String(preferredId));
       if(hit) return { a: hit, reason: `优先选择 ${preferredId}` };
     }
-    // sort by abr desc, non-drc first
     arr.sort((x,y)=>{
       const dx = isDrcFormatId(x.format_id) ? 1 : 0;
       const dy = isDrcFormatId(y.format_id) ? 1 : 0;
@@ -988,7 +992,7 @@
     if(!v){
       state.pick.auto_audio_id = null;
       state.pick.auto_audio_reason = "";
-      $("autoPickNote").textContent = "";
+      updateModeNote();
       return;
     }
 
@@ -996,7 +1000,7 @@
     if(hasAudio){
       state.pick.auto_audio_id = null;
       state.pick.auto_audio_reason = "该视频流自带音频（无需额外音频）";
-      $("autoPickNote").textContent = `提示：${state.pick.auto_audio_reason}`;
+      updateModeNote();
       return;
     }
 
@@ -1004,24 +1008,60 @@
     const vcodec = String(v.vcodec || "").toLowerCase();
 
     let prefer = null;
-    // mp4系优先 140；webm系优先 251
     if(ext === "mp4" || vcodec.includes("avc") || vcodec.includes("h264")) prefer = "140";
     else if(ext === "webm" || vcodec.includes("vp9") || vcodec.includes("av01")) prefer = "251";
 
     let res = pickBestAudio(auds, prefer);
     if(!res.a && prefer){
-      // if preferred not found, fallback already in pickBestAudio
       res = pickBestAudio(auds, null);
     }
 
     state.pick.auto_audio_id = res.a ? String(res.a.format_id) : null;
     state.pick.auto_audio_reason = res.reason;
-    $("autoPickNote").textContent = state.pick.auto_audio_id
-      ? `自动搭配音频：${state.pick.auto_audio_id}（${state.pick.auto_audio_reason}）`
-      : `自动搭配音频失败：${state.pick.auto_audio_reason}`;
+    updateModeNote();
   }
 
-  function renderFormatsTable(type, rows, pickedId, onPick){
+  function updateModeNote(){
+    const mode = state.pick.mode;
+
+    if(mode === "va"){
+      if(!state.pick.video_id){
+        $("autoPickNote").textContent = "模式：下载视频 + 音频（请选择一个视频流；未选择时默认 bestvideo+bestaudio）";
+        return;
+      }
+      // 有 video 选择
+      const vId = state.pick.video_id;
+      if(state.pick.auto_audio_reason && !state.pick.auto_audio_id){
+        $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流；${state.pick.auto_audio_reason}）`;
+        return;
+      }
+      if(state.pick.auto_audio_id){
+        $("autoPickNote").textContent =
+          `模式：下载视频 + 音频（您选择了 ${vId} 流；自动搭配音频：${state.pick.auto_audio_id}，${state.pick.auto_audio_reason}）`;
+        return;
+      }
+      $("autoPickNote").textContent = `模式：下载视频 + 音频（您选择了 ${vId} 流）`;
+      return;
+    }
+
+    if(mode === "v"){
+      if(state.pick.video_id){
+        $("autoPickNote").textContent = `模式：只下载视频（您的选择是 ${state.pick.video_id} 流）`;
+      } else {
+        $("autoPickNote").textContent = "模式：只下载视频（请选择一个视频流；未选择时默认 bestvideo）";
+      }
+      return;
+    }
+
+    // mode === "a"
+    if(state.pick.audio_id){
+      $("autoPickNote").textContent = `模式：只下载音频（您的选择是 ${state.pick.audio_id} 流）`;
+    } else {
+      $("autoPickNote").textContent = "模式：只下载音频（请选择一个音频流；未选择时默认 bestaudio）";
+    }
+  }
+
+  function renderFormatsTable(type, rows, pickedId){
     const isVideo = (type === "video");
     const cols = isVideo
       ? ["ID","EXT","分辨率","FPS","协议","码率","VCODEC","ACODEC","备注"]
@@ -1084,16 +1124,18 @@
     $("videoCount").textContent = `${vids.length} 条`;
     $("audioCount").textContent = `${auds.length} 条`;
 
-    $("videoTable").innerHTML = renderFormatsTable("video", vids, state.pick.video_id, ()=>{});
-    $("audioTable").innerHTML = renderFormatsTable("audio", auds, state.pick.audio_id, ()=>{});
+    $("videoTable").innerHTML = renderFormatsTable("video", vids, state.pick.video_id);
+    $("audioTable").innerHTML = renderFormatsTable("audio", auds, state.pick.audio_id);
 
-    // attach click handlers by event delegation
+    // attach click handlers
     for(const tr of $("videoTable").querySelectorAll("tr.pick-row")){
       tr.addEventListener("click", ()=>{
         if(phase === "downloading") return;
+        if(state.pick.mode === "a") return; // 只音频时禁用视频选择
         const id = tr.dataset.id;
         state.pick.video_id = id;
         if(state.pick.mode === "va") computeAutoAudio();
+        updateModeNote();
         rerenderPickTables();
       });
     }
@@ -1101,27 +1143,26 @@
     for(const tr of $("audioTable").querySelectorAll("tr.pick-row")){
       tr.addEventListener("click", ()=>{
         if(phase === "downloading") return;
-        if(state.pick.mode !== "a") return;
+        if(state.pick.mode !== "a") return; // 仅音频模式可选
         const id = tr.dataset.id;
         state.pick.audio_id = id;
+        updateModeNote();
         rerenderPickTables();
       });
     }
 
-    // mode-based notes
+    // 每次渲染后刷新提示
     if(state.pick.mode === "va"){
-      computeAutoAudio();
-    } else if(state.pick.mode === "v"){
-      $("autoPickNote").textContent = "模式：只下载视频（无需选择音频）";
+      if(state.pick.video_id) computeAutoAudio();
+      else updateModeNote();
     } else {
-      $("autoPickNote").textContent = "模式：只下载音频（请选择一个音频流）";
+      updateModeNote();
     }
   }
 
   function buildFormatSpecForDownload(){
     const mode = state.pick.mode;
 
-    // no selection fallback
     if(mode === "va"){
       if(!state.pick.video_id) return "bestvideo+bestaudio";
       const v = state.query.formats?.videos?.find(x => String(x.format_id) === String(state.pick.video_id));
@@ -1138,95 +1179,11 @@
       return String(state.pick.video_id);
     }
 
-    // mode === "a"
     if(!state.pick.audio_id) return "bestaudio";
     return String(state.pick.audio_id);
   }
 
-  // ====== artifacts 渲染（下载产物 + 可选调试工件） ======
-  function renderArtifactsTable(runId, artifactsJson, preferredRequestId){
-    const artsAll = artifactsJson.artifacts || [];
-    if(!artsAll.length){
-      return "<div class='muted'>（没有 artifacts）</div>";
-    }
-
-    const thumbUrl = state.download.meta?.thumbnail || state.query.formats?.video?.thumbnail || state.thumb_fallback || "";
-    const downloadReq = state.download.request_id;
-    const queryReq = state.query.request_id;
-
-    const isDebug = $("showDebugArts").checked;
-
-    // 下载产物：只默认显示 downloaded-videos-*
-    const show = (name) => {
-      if(name.startsWith("downloaded-videos-")) return true;
-      if(!isDebug) return false;
-      // debug show: meta-, query-result- 等
-      return true;
-    };
-
-    const arts = artsAll.filter(a => show(a.name));
-    if(!arts.length){
-      return "<div class='muted'>（当前筛选条件下没有可显示的 artifacts）</div>";
-    }
-
-    let html = `<div class="table-wrap"><table class="tbl">
-      <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>下载</th></tr></thead><tbody>`;
-
-    for(const a of arts){
-      const name = a.name;
-      const size = a.size_in_bytes;
-
-      const badges = [];
-      if(downloadReq && name === `downloaded-videos-${downloadReq}`) badges.push(`<span class="pill">download</span>`);
-      if(downloadReq && name === `meta-${downloadReq}`) badges.push(`<span class="pill">meta</span>`);
-      if(queryReq && name === `query-result-${queryReq}`) badges.push(`<span class="pill">query</span>`);
-
-      const baseHref = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
-
-      let prefix = "Artifact";
-      if(name.startsWith("downloaded-videos-")) prefix = "YouTube";
-      else if(name.startsWith("meta-")) prefix = "Meta";
-      else if(name.startsWith("query-result-")) prefix = "Formats";
-
-      let downloadHtml = `
-        <div class="cell-inner">
-          <a class="dl-btn" data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="${escAttr(prefix)}"
-             href="${escAttr(baseHref)}">⬇ 下载zip</a>
-        </div>`;
-
-      if(name.startsWith("downloaded-videos-")){
-        const res = state.download.meta?.selected?.resolution || null;
-        downloadHtml = `
-          <div class="cell-inner">
-            <a data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="${escAttr(prefix)}"
-               href="${escAttr(baseHref)}">
-              <img class="badge-img" src="${escAttr(shieldDownloadBadge(res))}" alt="download badge">
-            </a>
-          </div>`;
-      }
-
-      html += `<tr>
-        <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${escAttr(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
-        <td><div class="cell-inner"><div style="font-weight:900;">${esc(name)}</div></div> ${badges.join(" ")}</td>
-        <td><div class="cell-inner">${esc(humanBytes(size))}</div></td>
-        <td>${downloadHtml}</td>
-      </tr>`;
-    }
-
-    html += "</tbody></table></div>";
-    return html;
-  }
-
-  async function tryLoadMetaFromRun(runId, requestId, artifactsJson){
-    const metaName = `meta-${requestId}`;
-    const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
-    if(!exists) return null;
-    const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
-    return JSON.parse(txt);
-  }
-
   function cleanFormatsTxt(txt){
-    // 只保留从表头开始的内容（尽量去掉 [youtube]... 这些行）
     const lines = String(txt||"").split(/\r?\n/);
     let idx = lines.findIndex(l => l.startsWith("ID") && l.includes("EXT") && l.includes("RESOLUTION"));
     if(idx < 0) idx = lines.findIndex(l => l.startsWith("ID") && l.includes("EXT"));
@@ -1234,7 +1191,7 @@
     return lines.slice(idx).join("\n").trim();
   }
 
-  // ====== run 调度与轮询 ======
+  // ====== 运行调度 ======
   async function dispatchWorkflow(inputs){
     return await postJSON("/dispatch", { ref: "main", inputs });
   }
@@ -1277,17 +1234,61 @@
 
   $("showDebugArts").addEventListener("change", ()=>{
     $("debugArts").classList.toggle("hide", !$("showDebugArts").checked);
-    // refresh artifacts view if already loaded
-    if(state.download.run_id && state.download.artifacts){
-      $("artifacts").innerHTML = renderArtifactsTable(state.download.run_id, state.download.artifacts);
-    }
     if($("showDebugArts").checked){
       renderDebugArtifactsPanel();
     }
   });
 
+  /* 修复点 二：主 Artifacts 表格永远只显示成品 downloaded-videos-*（不随 debug 开关变化） */
+  function renderArtifactsTable(runId, artifactsJson){
+    const artsAll = artifactsJson.artifacts || [];
+    const arts = artsAll.filter(a => String(a.name || "").startsWith("downloaded-videos-"));
+
+    if(!arts.length){
+      return "<div class='muted'>（没有可下载的成品 artifacts）</div>";
+    }
+
+    const thumbUrl = state.download.meta?.thumbnail || state.query.formats?.video?.thumbnail || state.thumb_fallback || "";
+
+    let html = `<div class="table-wrap"><table class="tbl">
+      <thead class="thead-arts"><tr><th>预览</th><th>Name</th><th>Size</th><th>下载</th></tr></thead><tbody>`;
+
+    for(const a of arts){
+      const name = a.name;
+      const size = a.size_in_bytes;
+
+      const baseHref = `${WORKER_BASE}/artifact-zip?run_id=${encodeURIComponent(runId)}&name=${encodeURIComponent(name)}`;
+      const res = state.download.meta?.selected?.resolution || null;
+
+      const downloadHtml = `
+        <div class="cell-inner">
+          <a data-dl="1" data-runid="${escAttr(runId)}" data-artname="${escAttr(name)}" data-prefix="YouTube"
+             href="${escAttr(baseHref)}">
+            <img class="badge-img" src="${escAttr(shieldDownloadBadge(res))}" alt="download badge">
+          </a>
+        </div>`;
+
+      html += `<tr>
+        <td><div class="cell-inner">${thumbUrl ? `<img class="thumb" src="${escAttr(thumbUrl)}" alt="thumb" loading="lazy">` : ""}</div></td>
+        <td><div class="cell-inner"><div style="font-weight:900;">${esc(name)}</div></div></td>
+        <td><div class="cell-inner">${esc(humanBytes(size))}</div></td>
+        <td>${downloadHtml}</td>
+      </tr>`;
+    }
+
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  async function tryLoadMetaFromRun(runId, requestId, artifactsJson){
+    const metaName = `meta-${requestId}`;
+    const exists = (artifactsJson.artifacts || []).some(a => a.name === metaName);
+    if(!exists) return null;
+    const txt = await downloadZipAndExtractText(runId, metaName, "meta.json");
+    return JSON.parse(txt);
+  }
+
   async function renderDebugArtifactsPanel(){
-    // debug panel shows: query run artifact link (if exists) + meta artifact link (if exists)
     const parts = [];
 
     // query
@@ -1312,7 +1313,7 @@
       }
     }
 
-    // download meta
+    // download meta（修复点：文案改为“meta 工件”）
     if(state.download.run_id && state.download.request_id){
       try{
         const arts = state.download.artifacts || await fetchJSON(`/artifacts?run_id=${state.download.run_id}`);
@@ -1320,7 +1321,7 @@
         const exists = (arts.artifacts||[]).some(a => a.name === mname);
         if(exists){
           parts.push(`
-            <div class="muted" style="margin:14px 0 8px;"><b>Download meta 工件</b></div>
+            <div class="muted" style="margin:14px 0 8px;"><b>meta 工件</b></div>
             <a class="dl-btn" data-dl="1" data-runid="${escAttr(state.download.run_id)}" data-artname="${escAttr(mname)}" data-prefix="Meta"
                href="${escAttr(WORKER_BASE + "/artifact-zip?run_id="+encodeURIComponent(state.download.run_id)+"&name="+encodeURIComponent(mname))}">
                ⬇ 下载 meta zip
@@ -1335,12 +1336,22 @@
     $("debugArtifacts").innerHTML = parts.join("<div style='height:10px;'></div>") || "<div class='muted'>(暂无)</div>";
   }
 
+  function minDim720Guard(v){
+    // 前端二次保险：过滤掉 480x854 这类“高度>720但短边<720”的竖屏低清
+    const w = normNumber(v.width);
+    const h = normNumber(v.height);
+    if(w != null && h != null){
+      return Math.min(w, h) >= 720;
+    }
+    // 缺字段时退回原过滤：height>=720
+    return (h != null ? h >= 720 : true);
+  }
+
   // ====== 主流程：查询 ======
   async function doQuery(){
     const link = String($("videoLink").value||"").trim();
     if(!link) return;
 
-    // reset previous query+download but keep debug toggle
     const debugOn = $("showDebugArts").checked;
     resetAllUI();
     $("showDebugArts").checked = debugOn;
@@ -1357,7 +1368,6 @@
     const request_id = uuid();
     state.query.request_id = request_id;
 
-    // 触发查询（保持与现有 workflow 兼容）
     await dispatchWorkflow({
       request_id,
       action_type: "查询",
@@ -1389,13 +1399,10 @@
       $("status").textContent = `查询状态：${st}`;
     });
 
-    // 查询结束后加载 formats artifact
     try{
       $("status").textContent = "查询已完成，正在加载格式列表...";
-      const arts = await fetchJSON(`/artifacts?run_id=${state.query.run_id}`);
       const qname = `query-result-${state.query.request_id}`;
 
-      // 优先读取 formats.json
       let formatsObj = null;
       try{
         const files = await downloadZipFiles(state.query.run_id, qname);
@@ -1404,7 +1411,6 @@
           const jsonTxt = strFromU8(files[jsonKey]);
           formatsObj = JSON.parse(jsonTxt);
         } else {
-          // fallback formats.txt
           const txtKey = Object.keys(files).find(k => k.endsWith("formats.txt"));
           if(txtKey){
             const raw = strFromU8(files[txtKey]);
@@ -1412,12 +1418,10 @@
           }
         }
       } catch(e){
-        // if artifact missing or cannot read, surface it
         throw e;
       }
 
       if(!formatsObj){
-        // 没有 formats.json：提示更新 workflow；但仍展示 txt（若有）
         $("formatsZone").classList.remove("hide");
         $("formatsTxtBox").classList.toggle("hide", !state.query.raw_formats_txt);
         if(state.query.raw_formats_txt) $("formatsTxt").textContent = state.query.raw_formats_txt;
@@ -1427,12 +1431,15 @@
         return;
       }
 
-      // normalize formats object
       const videoMeta = formatsObj.video || formatsObj.meta || {};
-      const vids = formatsObj.videos || [];
+      let vids = formatsObj.videos || [];
       const auds = formatsObj.audios || [];
 
+      // 修复点 6（二次保险）：过滤掉 min(width,height)<720 的竖屏低清（如 480x854 -> 854p）
+      vids = vids.filter(minDim720Guard);
+
       state.query.formats = { video: videoMeta, videos: vids, audios: auds };
+
       renderVideoMeta({
         title: videoMeta.title,
         duration: videoMeta.duration,
@@ -1441,9 +1448,11 @@
         thumbnail: videoMeta.thumbnail || state.thumb_fallback,
       });
 
-      // show formats
       $("formatsZone").classList.remove("hide");
       $("formatsTxtBox").classList.add("hide");
+
+      // 默认模式 va，且此时不在下载中
+      setMode("va");
       rerenderPickTables();
 
       $("status").textContent = `格式列表已加载：视频 ${vids.length} 条 / 音频 ${auds.length} 条。请选择后提交下载任务。`;
@@ -1460,7 +1469,11 @@
   }
 
   $("btnQuery").addEventListener("click", async ()=>{
-    try{ await doQuery(); } catch(e){ $("status").textContent = String(e); setPhase("idle"); $("videoLink").disabled = false; }
+    try{ await doQuery(); } catch(e){
+      $("status").textContent = String(e);
+      setPhase("idle");
+      $("videoLink").disabled = false;
+    }
   });
 
   // ====== 主流程：下载 ======
@@ -1471,6 +1484,10 @@
     }
 
     setPhase("downloading");
+    // 下载中，保持互斥置灰
+    setPanelDisabled("videoPanel", true);
+    setPanelDisabled("audioPanel", true);
+
     $("status").textContent = "正在触发下载工作流...";
 
     const req = uuid();
@@ -1495,6 +1512,7 @@
     if(!run){
       $("status").textContent = "未能定位到下载 run（可能 GitHub 延迟）。请稍后重试或去 Actions 页面查看。";
       setPhase("queried");
+      setMode(state.pick.mode);
       return;
     }
 
@@ -1516,7 +1534,6 @@
       const arts = await fetchJSON(`/artifacts?run_id=${state.download.run_id}`);
       state.download.artifacts = arts;
 
-      // 尝试加载 meta.json（用于展示标题/分辨率等），即使工件默认隐藏也无妨
       const meta = await tryLoadMetaFromRun(state.download.run_id, state.download.request_id, arts);
       state.download.meta = meta;
       if(meta){
@@ -1539,7 +1556,6 @@
       $("artNote").textContent = "加载 artifacts 失败：" + String(e);
     }
 
-    // 下载结束：解锁列表
     const conc = (runInfo.conclusion || "").toLowerCase();
     if(conc === "success"){
       $("status").textContent = "下载已完成：请在 Artifacts 区下载成品 zip。";
@@ -1547,17 +1563,19 @@
       $("status").textContent = `下载结束：${runInfo.conclusion || "unknown"}（可打开运行页面查看日志）`;
     }
 
-    setPhase("queried"); // back to selectable state (keep list)
+    setPhase("queried");
+    // 恢复互斥状态（按当前 mode）
+    setMode(state.pick.mode);
   }
 
   $("btnDownload").addEventListener("click", async ()=>{
     try{ await doDownload(); } catch(e){
       $("status").textContent = "提交/运行下载失败：" + String(e);
       setPhase("queried");
+      setMode(state.pick.mode);
     }
   });
 
-  // 初始化
   resetAllUI();
 </script>
 </body>
