@@ -50,7 +50,7 @@ jobs:
           deno-version: v2.x
 
       - name: Install yt-dlp (with EJS scripts)
-        run: pip install -U --pre "yt-dlp[default]"
+        run: pip install -U "yt-dlp[default]"
 
       # =========================================================
       # 查询模式：生成 formats.json（供网页渲染筛选）+ formats.txt（调试）
