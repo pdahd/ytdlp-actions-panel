@@ -64,11 +64,11 @@ jobs:
           mkdir -p out
 
           # 结构化信息（用于生成 formats.json）
-          yt-dlp --force-ipv4 -J --cookies <(printf '%s' "$COOKIES_CONTENT") \
+          yt-dlp --force-ipv4 -J --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --cookies <(printf '%s' "$COOKIES_CONTENT") \
             "$VIDEO_LINK" > out/info.json
 
           # 纯文本格式表（调试备用）
-          yt-dlp --force-ipv4 -F --cookies <(printf '%s' "$COOKIES_CONTENT") \
+          yt-dlp --force-ipv4 -F --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --cookies <(printf '%s' "$COOKIES_CONTENT") \
             "$VIDEO_LINK" | tee out/formats.txt
 
       - name: Build formats.json (filtered)
