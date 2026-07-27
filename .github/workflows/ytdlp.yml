@@ -405,6 +405,7 @@ jobs:
           fi
 
           yt-dlp --force-ipv4 --cookies <(printf '%s' "$COOKIES_CONTENT") \
+            -S "res,fps,vcodec:h264,acodec:aac,br" \
             "${FARG[@]}" \
             $([[ "${{ github.event.inputs.enable_sections }}" == "是" ]] && echo --download-sections "*${{ github.event.inputs.start_time }}-${{ github.event.inputs.end_time }}") \
             --concurrent-fragments 10 \
