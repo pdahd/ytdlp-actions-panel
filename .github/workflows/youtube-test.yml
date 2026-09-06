@@ -1,0 +1,48 @@
+name: YouTube Format Query Test
+
+on:
+  workflow_dispatch: # 支持在 GitHub Actions 页面手动点击触发运行
+
+jobs:
+  query-formats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 安装 Deno 运行时
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: 安装最新版 yt-dlp
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U "yt-dlp[default]"
+
+      - name: 写入 Repository Secret Cookies
+        env:
+          COOKIES_CONTENT: ${{ secrets.COOKIES }}
+        run: |
+          if [ -n "$COOKIES_CONTENT" ]; then
+            echo "$COOKIES_CONTENT" > /tmp/cookies.txt
+            echo "✅ 成功读取 COOKIES Secret 并写入 /tmp/cookies.txt"
+          else
+            echo "⚠️ 未配置或未读取到 COOKIES Secret"
+          fi
+
+      - name: 1️⃣ 【测试一：带 Cookies 查询流列表】
+        run: |
+          echo "=========================================="
+          echo "  正在执行：带 Cookies 查询 yt-dlp -F"
+          echo "=========================================="
+          if [ -s /tmp/cookies.txt ]; then
+            yt-dlp --js-runtimes deno --remote-components ejs:github --cookies /tmp/cookies.txt -F "https://youtu.be/e9f0l2HKbZE?si=x48P7RQY6LNQbDd-"
+          else
+            echo "无 Cookies 文件，跳过此步"
+          fi
+
+      - name: 2️⃣ 【测试二：不带 Cookies 查询流列表（对比用）】
+        run: |
+          echo "=========================================="
+          echo "  正在执行：不带 Cookies 查询 yt-dlp -F"
+          echo "=========================================="
+          yt-dlp --js-runtimes deno --remote-components ejs:github -F "https://youtu.be/e9f0l2HKbZE?si=x48P7RQY6LNQbDd-"
