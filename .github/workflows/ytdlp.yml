@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Deno (EJS runtime)
         uses: denoland/setup-deno@v2
@@ -64,11 +64,11 @@ jobs:
           mkdir -p out
 
           # 结构化信息（用于生成 formats.json）
-          yt-dlp --force-ipv4 -J  \
+          yt-dlp --force-ipv4 -J --cookies <(printf '%s' "$COOKIES_CONTENT") \
             "$VIDEO_LINK" > out/info.json
 
           # 纯文本格式表（调试备用）
-          yt-dlp --force-ipv4 -F  \
+          yt-dlp --force-ipv4 -F --cookies <(printf '%s' "$COOKIES_CONTENT") \
             "$VIDEO_LINK" | tee out/formats.txt
 
       - name: Build formats.json (filtered)
@@ -414,7 +414,7 @@ jobs:
 
       - name: Upload downloaded videos
         if: ${{ github.event.inputs.action_type == '下载' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: downloaded-videos-${{ github.event.inputs.request_id }}
           path: downloads/**
